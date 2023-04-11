@@ -3,6 +3,7 @@ import csv
 import time
 import random
 import config
+from database import DataBase
 from selenium.webdriver.common.by import By
 from scraping_manager.automate import WebScraping
 
@@ -40,31 +41,10 @@ class Bot (WebScraping):
         # Start chrome
         super ().__init__ (headless=self.headless, chrome_folder=self.chrome_folder, start_killing=True)
         
-        # Get history rows
-        self.followed_classic, self.followed_advanced, \
-        self.unfollowed, self.history = self.__get_history__ ()
-        
-    def __get_history__ (self) -> tuple:
-        """ Read rows from history file
-
-        Returns:
-            tuple: lists of followed and unfollowed users
-                list: followed_classic
-                list: followed_advanced
-                list: unfollowed
-                list: history_rows
-        """
-        
-        with open (self.history_file, "r") as file:
-            csv_reader = csv.reader (file)
-            history = list (csv_reader)
-            
-        followed_classic = list(map(lambda row: row[0], filter(lambda row: row[1] == "followed_classic", history)))
-        followed_advanced = list(map(lambda row: row[0], filter(lambda row: row[1] == "followed_advanced", history)))
-        unfollowed = list(map(lambda row: row[0], filter(lambda row: row[1] == "unfollowed", history)))
-        history_rows = list(map(lambda row: row[0], history))
-        
-        return followed_classic, followed_advanced, unfollowed, history_rows      
+        # Conneact with database and create tables
+        self.database = DataBase("bot")
+        self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char)")
+        self.database.run_sql ("CREATE TABLE IF NOT EXISTS status (status char)")
     
     def __wait__ (self, message:str=""):
         """ Wait time and show message
@@ -93,10 +73,7 @@ class Bot (WebScraping):
             list: list of links found
         """
                                 
-        # Add already followed users to skip list
-        skip_users += self.followed_advanced
-        skip_users += self.followed_classic
-        skip_users += self.unfollowed
+        # TODO: get already followed from database
         
         more_links = True
         links_found = []
@@ -138,7 +115,11 @@ class Bot (WebScraping):
                 if elems:
                     self.click_js (load_more_selector)
                     time.sleep(3)
-                    
+        
+        # Fix number of links found
+        if len (links_found) > max_users: 
+            links_found = links_found[:max_users]
+        
         return links_found
     
     def __save_user_history__ (self, user:str, status:str):
@@ -163,15 +144,20 @@ class Bot (WebScraping):
         time.sleep (10)
         self.refresh_selenium ()
         
-    def __follow_like_users__ (self, max_posts:int=3, follow_type:str=""):
+    def __follow_like_users__ (self, max_posts:int=3):
         """ Follow and like posts of users from a profile_links
 
         Args:
             max_posts (int, optional): number of post to like. Defaults to 3.
-            follow_type (str, optional): type of follow. Defaults to "".
         """
         
-        for user in self.profile_links:
+        print ("\nStart following and liking users...")
+        
+        # Get users to follow from database
+        users_data = self.database.run_sql ("SELECT user FROM users WHERE status = 'to follow'")
+        users = list(map(lambda user_data: user_data[0], users_data))
+        
+        for user in users:
             
             # Set user page
             self.__set_page_wait__ (user)
@@ -203,9 +189,7 @@ class Bot (WebScraping):
                     # Wait after like
                     post_index = posts_elems.index(post) + 1
                     self.__wait__ (f"\tpost liked: {post_index}/{max_posts}")
-            
-            # Save current user in history
-            self.__save_user_history__ (user, follow_type)
+                    
             
     def __get_unfollow_users__ (self) -> list:
         """ Request to the user the list of followed users from text files
@@ -257,7 +241,7 @@ class Bot (WebScraping):
         posts_links = self.get_attribs (self.selectors["post"], "href")
         
         # Open each post details
-        profile_links = skip_users[:]
+        profile_links = []
         for post_link in posts_links:                
             print (f"\tgetting from post: {post_link}")
             
@@ -273,8 +257,8 @@ class Bot (WebScraping):
                 self.selectors["users_posts_likes_wrapper"], 
                 self.selectors["users_posts_likes_load_more"],
                 scroll_by=2000,      
-                max_users=max_users/2,
-                skip_users=profile_links                
+                max_users=int(max_users/2) + 1,
+                skip_users=profile_links + skip_users            
             )
             
             # Open post comments
@@ -286,8 +270,8 @@ class Bot (WebScraping):
                 self.selectors["users_posts_comments_wrapper"], 
                 self.selectors["users_posts_comments_load_more"], 
                 scroll_by=4000,
-                max_users=max_users/2,
-                skip_users=profile_links
+                max_users=int(max_users/2) + 1,
+                skip_users=profile_links + skip_users  
             )
             
             # End loop if max users reached
@@ -311,7 +295,7 @@ class Bot (WebScraping):
         """
         
                         
-        print (f"\tgetting users from followers list...")
+        print (f"\tgetting from followers list...")
         
         # Show followers page 
         url = f"https://www.instagram.com/{target_user}/followers/"
@@ -331,19 +315,21 @@ class Bot (WebScraping):
     
         return profile_links
     
-    def auto_follow_unfollow (self):
+    def auto_follow (self):
+        
+        print ("FOLLOWING USERS:\n")
         
         # Calculate users to follow from each target user
         max_follow_target = int(self.max_follow / len(self.list_follow))
         
+        total_users_found = 0
         for target_user in self.list_follow:
             
-            print (f"Getting users from: {target_user}")
-            
             users_found = []
+            print (f"\nGetting users from: {target_user}")
             
             # Get users from target posts
-            max_follow_comments = max_follow_target/2
+            max_follow_comments = int(max_follow_target/2)
             users_posts = self.__get_users_posts__ (target_user, max_follow_comments, users_found)
             users_found += users_posts
             
@@ -352,9 +338,20 @@ class Bot (WebScraping):
             users_followers = self.__get_users_followers__ (target_user, max_follow_followers, users_found)
             users_found += users_followers    
             
-            print (f"\t{len(users_found)} total users found")
-            print ()
+            print (f"\t{len(users_found)} users found from {target_user}")       
+                 
+            # Save users in database
+            print (f"\tSaving users in database...")    
+            for user in users_found:
+                self.database.run_sql (f"INSERT INTO users VALUES ('{user}', 'to follow')")
+                
+            total_users_found += len(users_found)
             
+        print (f"\n{total_users_found} total users found")
+        
+        self.__follow_like_users__ ()
+
+        
     def unfollow (self):
         """ Unfollow users """
         

@@ -19,9 +19,6 @@ class Bot (WebScraping):
         self.max_follow = config.get_credential ("max_follow")
         self.chrome_folder = config.get_credential ("chrome_folder")
         
-        # User to follow or unfollow
-        self.profile_links = []
-        
         # History file
         self.history_file = os.path.join (os.path.dirname (__file__), "history.csv")
         
@@ -35,6 +32,9 @@ class Bot (WebScraping):
             "users_posts_comments": "._ae2s._ae3v._ae3w .xt0psk2 > a",
             "users_posts_comments_wrapper": "._ae2s._ae3v._ae3w .x78zum5.xdt5ytf.x1iyjqo2.x9ek82g",
             "users_posts_comments_load_more": "",
+            "users_followers": ".x7r02ix.xf1ldfh.x131esax .xt0psk2 > .xt0psk2 > a",
+            "users_followers_wrapper": '[role="dialog"] ._aano',
+            "users_followers_load_more": "",
         }
     
         # Start chrome
@@ -77,22 +77,29 @@ class Bot (WebScraping):
         if message:
             print (message)
     
-    def __load_links__ (self, selector_link:str, selector_wrapper:str, load_more_selector:str="", scroll_by=2000): 
+    def __load_links__ (self, selector_link:str, selector_wrapper:str, load_more_selector:str, 
+                        scroll_by:int, max_users:int, skip_users:list) -> list: 
         """ get links from scrollable element
 
         Args:
             selector_link (str): css selector of the link
             selector_wrapper (str): css selector of the scroll element
-            load_more_selector (str, optional): Selector of button for load more links. Defaults to "".
+            load_more_selector (str): Selector of button for load more links.
+            scroll_by (int): number of pixels to scroll down
+            max_users (int): max number of links to get
+            skip_users (list): list of users to skip
+            
+        Returns:
+            list: list of links found
         """
                                 
-        # Gennerate list of users to skip
-        skip_users = []
+        # Add already followed users to skip list
         skip_users += self.followed_advanced
         skip_users += self.followed_classic
         skip_users += self.unfollowed
         
         more_links = True
+        links_found = []
         last_links = []
         while more_links: 
             
@@ -111,12 +118,12 @@ class Bot (WebScraping):
             for link in links: 
                 
                 # Save current linl
-                if link not in skip_users and link not in self.profile_links: 
-                    self.profile_links.append(link)
+                if link not in skip_users and link not in links_found: 
+                    links_found.append(link)
                     
                 # Count number of links
-                links_num = len (self.profile_links)
-                if links_num >= self.max_follow: 
+                links_num = len (links_found)
+                if links_num >= max_users: 
                     more_links = False
                     break
             
@@ -131,6 +138,8 @@ class Bot (WebScraping):
                 if elems:
                     self.click_js (load_more_selector)
                     time.sleep(3)
+                    
+        return links_found
     
     def __save_user_history__ (self, user:str, status:str):
         """ Save new user in history file
@@ -228,81 +237,124 @@ class Bot (WebScraping):
         
         return followed
     
-    def __load_users_posts__ (self):
+    def __get_users_posts__ (self, target_user:str, max_users:int, skip_users:list=[]) -> list:
         """ Load user to follow from target posts comments and likes
-        """
         
-        # Loop each target user
-        for user in self.list_follow: 
-            print (f"Getting users from: {user}")
-            
-             # Show followers page 
-            url = f"https://www.instagram.com/{user}"
-            self.__set_page_wait__ (url)
-            
-            # Get posts links
-            posts_links = self.get_attribs (self.selectors["post"], "href")
-            
-            # Open each post details
-            for post_link in posts_links:                
-                print (f"\tgetting from post: {post_link}")
-                
-                self.__set_page_wait__ (post_link)
-                
-                # Open post likes
-                self.click_js (self.selectors["show_post_likes"])
-                self.refresh_selenium ()
-                
-                # Go down and get profiles links from likes
-                self.__load_links__ (
-                    self.selectors["users_posts_likes"], 
-                    self.selectors["users_posts_likes_wrapper"], 
-                    self.selectors["users_posts_likes_load_more"],
-                    scroll_by=2000                   
-                )
-                
-                # Open post comments
-                self.__set_page_wait__ (post_link)
-                
-                # Go down and get profiles links from comments
-                self.__load_links__ (
-                    self.selectors["users_posts_comments"], 
-                    self.selectors["users_posts_comments_wrapper"], 
-                    self.selectors["users_posts_comments_load_more"], 
-                    scroll_by=4000 
-                )
-                
-                # End loop if max users reached
-                if len(self.profile_links) >= self.max_follow:
-                    break
+        Args:
+            target_user (str): user target to get followers
+            max_users (int): max users to follow from target
+            skip_users (list, optional): list of users to skip. Defaults to [].
 
-    def __load_users_followers__ (self):
-        """ Load user to follow from target current followers
+        Returns:
+            list: list of users found
         """
         
-        # Loop each user
-        for user in self.list_follow:
-                        
-            print (f"getting users from followers list {user}...")
+        # Show followers page 
+        url = f"https://www.instagram.com/{target_user}"
+        self.__set_page_wait__ (url)
+        
+        # Get posts links
+        posts_links = self.get_attribs (self.selectors["post"], "href")
+        
+        # Open each post details
+        profile_links = skip_users[:]
+        for post_link in posts_links:                
+            print (f"\tgetting from post: {post_link}")
             
-            # Show followers page 
-            url = f"https://www.instagram.com/{user}/followers/"
-            self.set_page (url)
-                    
-            # Go down and get profiles links
-            self.__load_links__ (
-                self.selectors["followers_links"], 
-                filter_classic=True,
-                filter_unfollowed=True,
-                load_from="followers"
+            self.__set_page_wait__ (post_link)
+            
+            # Open post likes
+            self.click_js (self.selectors["show_post_likes"])
+            self.refresh_selenium ()
+            
+            # Go down and get profiles links from likes
+            profile_links += self.__load_links__ (
+                self.selectors["users_posts_likes"], 
+                self.selectors["users_posts_likes_wrapper"], 
+                self.selectors["users_posts_likes_load_more"],
+                scroll_by=2000,      
+                max_users=max_users/2,
+                skip_users=profile_links                
             )
             
-        print (f"{len(self.profile_links)} users found")
+            # Open post comments
+            self.__set_page_wait__ (post_link)
+            
+            # Go down and get profiles links from comments
+            profile_links += self.__load_links__ (
+                self.selectors["users_posts_comments"], 
+                self.selectors["users_posts_comments_wrapper"], 
+                self.selectors["users_posts_comments_load_more"], 
+                scroll_by=4000,
+                max_users=max_users/2,
+                skip_users=profile_links
+            )
+            
+            # End loop if max users reached
+            if len(profile_links) >= max_users:
+                break
+            
+        print (f"\t\t{len(profile_links)} users found")
         
-        # Follow users
-        self.__follow_like_users__ (follow_type="followed_classic")
+        return profile_links
+
+    def __get_users_followers__ (self, target_user:str, max_users:int, skip_users:list=[]) -> list:
+        """Load user to follow from target current followers
+
+        Args:
+            target_user (str): user target to get followers
+            max_users (int): max users to follow from target
+            skip_users (list, optional): list of users to skip. Defaults to [].
+
+        Returns:
+            list: list of users found
+        """
+        
+                        
+        print (f"\tgetting users from followers list...")
+        
+        # Show followers page 
+        url = f"https://www.instagram.com/{target_user}/followers/"
+        self.set_page (url)
+                
+        # Go down and get profiles links
+        profile_links = self.__load_links__ (
+            self.selectors["users_followers"], 
+            self.selectors["users_followers_wrapper"], 
+            self.selectors["users_followers_load_more"],
+            scroll_by=2000,
+            max_users=max_users,
+            skip_users=skip_users    
+        )
+            
+        print (f"\t\t{len(profile_links)} users found")
     
+        return profile_links
     
+    def auto_follow_unfollow (self):
+        
+        # Calculate users to follow from each target user
+        max_follow_target = int(self.max_follow / len(self.list_follow))
+        
+        for target_user in self.list_follow:
+            
+            print (f"Getting users from: {target_user}")
+            
+            users_found = []
+            
+            # Get users from target posts
+            max_follow_comments = max_follow_target/2
+            users_posts = self.__get_users_posts__ (target_user, max_follow_comments, users_found)
+            users_found += users_posts
+            
+            # Get users from target followers
+            max_follow_followers = max_follow_target - len(users_found)
+            users_followers = self.__get_users_followers__ (target_user, max_follow_followers, users_found)
+            users_found += users_followers    
+            
+            print (f"\t{len(users_found)} total users found")
+            print ()
+            
     def unfollow (self):
         """ Unfollow users """
         

@@ -189,8 +189,7 @@ class Bot (WebScraping):
                     # Wait after like
                     post_index = posts_elems.index(post) + 1
                     self.__wait__ (f"\tpost liked: {post_index}/{max_posts}")
-                    
-            
+                             
     def __get_unfollow_users__ (self) -> list:
         """ Request to the user the list of followed users from text files
 
@@ -315,43 +314,61 @@ class Bot (WebScraping):
     
         return profile_links
     
-    def auto_follow (self):
+    def __count_users_to_follow__ (self) -> int:
+        """ Count users to follow already in database
+
+        Returns:
+            int: number of users to follow in database
+        """
         
+        users_to_follow_num = self.database.run_sql (f"SELECT COUNT(user) FROM users WHERE status = 'to follow'")[0][0]
+        return users_to_follow_num
+        
+    
+    def auto_follow (self):
+                
         print ("FOLLOWING USERS:\n")
         
+        # Count user to follow already in database
+        users_to_follow_num = self.__count_users_to_follow__ ()
+        
         # Calculate users to follow from each target user
-        max_follow_target = int(self.max_follow / len(self.list_follow))
+        remaining_users = self.max_follow - users_to_follow_num
+        max_follow_target = int(remaining_users / len(self.list_follow))
         
-        total_users_found = 0
-        for target_user in self.list_follow:
-            
-            users_found = []
-            print (f"\nGetting users from: {target_user}")
-            
-            # Get users from target posts
-            max_follow_comments = int(max_follow_target/2)
-            users_posts = self.__get_users_posts__ (target_user, max_follow_comments, users_found)
-            users_found += users_posts
-            
-            # Get users from target followers
-            max_follow_followers = max_follow_target - len(users_found)
-            users_followers = self.__get_users_followers__ (target_user, max_follow_followers, users_found)
-            users_found += users_followers    
-            
-            print (f"\t{len(users_found)} users found from {target_user}")       
-                 
-            # Save users in database
-            print (f"\tSaving users in database...")    
-            for user in users_found:
-                self.database.run_sql (f"INSERT INTO users VALUES ('{user}', 'to follow')")
+        if max_follow_target > 0:
+            print (f"Max users to follow from each target: {max_follow_target}")
+        
+            total_users_found = 0
+            for target_user in self.list_follow:
                 
-            total_users_found += len(users_found)
-            
-        print (f"\n{total_users_found} total users found")
-        
-        self.__follow_like_users__ ()
+                users_found = []
+                print (f"\nGetting users from: {target_user}")
+                
+                # Get users from target posts
+                max_follow_comments = int(max_follow_target/2)
+                users_posts = self.__get_users_posts__ (target_user, max_follow_comments, users_found)
+                users_found += users_posts
+                
+                # Get users from target followers
+                max_follow_followers = max_follow_target - len(users_found)
+                users_followers = self.__get_users_followers__ (target_user, max_follow_followers, users_found)
+                users_found += users_followers    
+                
+                print (f"\t{len(users_found)} users found from {target_user}")       
+                    
+                # Save users in database
+                print (f"\tSaving users in database...")    
+                for user in users_found:
+                    self.database.run_sql (f"INSERT INTO users VALUES ('{user}', 'to follow')")
+                    
+                total_users_found += len(users_found)
+                
+        users_to_follow_num = self.__count_users_to_follow__ ()
+        print (f"\n{users_to_follow_num} users found")
 
-        
+        self.__follow_like_users__ ()
+     
     def unfollow (self):
         """ Unfollow users """
         

@@ -32,9 +32,9 @@ class Bot (WebScraping):
             "users_posts_likes": "span.x1lliihq.x193iq5w.x6ikm8r a",
             "users_posts_likes_wrapper": '[role="dialog"] [style^="height: 356px;"]',
             "users_posts_likes_load_more": "",
-            "users_posts_comments": "ul._a9ym .xt0psk2 > a",
-            "users_posts_comments_wrapper": ".x10l6tqk.xexx8yu.x1pi30zi > .x5yr21d > ul._a9z6._a9za",
-            "users_posts_comments_load_more": ".x10l6tqk.xexx8yu.x1pi30zi > .x5yr21d > ul._a9z6._a9za > li button",
+            "users_posts_comments": "._ae2s._ae3v._ae3w .xt0psk2 > a",
+            "users_posts_comments_wrapper": "._ae2s._ae3v._ae3w .x78zum5.xdt5ytf.x1iyjqo2.x9ek82g",
+            "users_posts_comments_load_more": "",
         }
     
         # Start chrome
@@ -77,7 +77,7 @@ class Bot (WebScraping):
         if message:
             print (message)
     
-    def __load_links__ (self, selector_link:str, selector_wrapper:str, load_more_selector:str=""): 
+    def __load_links__ (self, selector_link:str, selector_wrapper:str, load_more_selector:str="", scroll_by=2000): 
         """ get links from scrollable element
 
         Args:
@@ -85,9 +85,7 @@ class Bot (WebScraping):
             selector_wrapper (str): css selector of the scroll element
             load_more_selector (str, optional): Selector of button for load more links. Defaults to "".
         """
-                
-        scroll_by = 2000
-                
+                                
         # Gennerate list of users to skip
         skip_users = []
         skip_users += self.followed_advanced
@@ -123,9 +121,9 @@ class Bot (WebScraping):
                     break
             
             # Go down
-            elems = self.scraper.get_elems (selector_wrapper)
+            elems = self.get_elems (selector_wrapper)
             if elems:
-                self.scraper.driver.execute_script(f"arguments[0].scrollBy (0, {scroll_by});", elems[0])
+                self.driver.execute_script(f"arguments[0].scrollBy (0, {scroll_by});", elems[0])
             
             # Click button for load more results
             if load_more_selector:
@@ -230,12 +228,13 @@ class Bot (WebScraping):
         
         return followed
     
-    def __get_users__ (self):
-        """ Return users to follow from likes, comments and followers
+    def __load_users_posts__ (self):
+        """ Load user to follow from target posts comments and likes
         """
         
         # Loop each target user
         for user in self.list_follow: 
+            print (f"Getting users from: {user}")
             
              # Show followers page 
             url = f"https://www.instagram.com/{user}"
@@ -245,7 +244,8 @@ class Bot (WebScraping):
             posts_links = self.get_attribs (self.selectors["post"], "href")
             
             # Open each post details
-            for post_link in posts_links:
+            for post_link in posts_links:                
+                print (f"\tgetting from post: {post_link}")
                 
                 self.__set_page_wait__ (post_link)
                 
@@ -257,7 +257,8 @@ class Bot (WebScraping):
                 self.__load_links__ (
                     self.selectors["users_posts_likes"], 
                     self.selectors["users_posts_likes_wrapper"], 
-                    self.selectors["users_posts_likes_load_more"],                     
+                    self.selectors["users_posts_likes_load_more"],
+                    scroll_by=2000                   
                 )
                 
                 # Open post comments
@@ -268,14 +269,15 @@ class Bot (WebScraping):
                     self.selectors["users_posts_comments"], 
                     self.selectors["users_posts_comments_wrapper"], 
                     self.selectors["users_posts_comments_load_more"], 
+                    scroll_by=4000 
                 )
                 
                 # End loop if max users reached
                 if len(self.profile_links) >= self.max_follow:
                     break
 
-    def follow_classic (self):
-        """ Follow users from current followers list of an specific users
+    def __load_users_followers__ (self):
+        """ Load user to follow from target current followers
         """
         
         # Loop each user
@@ -300,54 +302,6 @@ class Bot (WebScraping):
         # Follow users
         self.__follow_like_users__ (follow_type="followed_classic")
     
-    def follow_advanced (self):
-        """ Follow users from linkes of last posts from specific users
-        """
-        
-        # Loop each user
-        for user in self.list_follow:
-            
-            # Show followers page 
-            url = f"https://twitter.com/{user}"
-            self.__set_page_wait__ (url)
-            
-            # Get posts links
-            posts_links = self.get_attribs (self.selectors["post_link"], "href")
-            
-            # Open each post details
-            for post_link in posts_links:
-                
-                # Open post likes
-                post_link_likes = post_link + "/likes"
-                self.__set_page_wait__ (post_link_likes)
-                
-                # Go down and get profiles links from likes
-                self.__load_links__ (
-                    self.selectors["post_like_user"], 
-                    filter_advanced=True,
-                    filter_unfollowed=True,
-                    load_from="likes"
-                )
-                
-                # Open post comments
-                self.__set_page_wait__ (post_link)
-                
-                # Go down and get profiles links from comments
-                self.__load_links__ (
-                    self.selectors["post_like_user"], 
-                    filter_advanced=True,
-                    filter_unfollowed=True,
-                    load_from="comments"
-                )
-                
-                # End loop if max users reached
-                if len(self.profile_links) >= self.max_follow:
-                    break
-                
-        print (f"{len(self.profile_links)} users found")
-                
-        # Follow users
-        self.__follow_like_users__ (follow_type="followed_advanced")
     
     def unfollow (self):
         """ Unfollow users """

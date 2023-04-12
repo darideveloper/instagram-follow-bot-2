@@ -416,8 +416,5 @@ class Bot (WebScraping):
                 self.database.run_sql ("update settings set value = 'unfollow' where name = 'status'")
             elif status == "unfollow":
                 self.auto_unfollow ()
-                self.database.run_sql ("update settings set value = 'follow' where name = 'status'")
-                
-            print ()
-            
+                self.database.run_sql ("update settings set value = 'follow' where name = 'status'")            
     

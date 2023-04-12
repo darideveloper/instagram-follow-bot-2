@@ -6,5 +6,5 @@ sys.path.append(parent_folder)
 
 from bot import Bot
 
-bot_icnstance = Bot ()
-bot_icnstance.unfollow ()
+bot_instance = Bot()
+bot_instance.auto_run ()

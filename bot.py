@@ -187,13 +187,23 @@ class Bot (WebScraping):
                 
                 self.__set_page_wait__ (post_link)
                 self.refresh_selenium ()
-                try:
-                    self.click_js(self.selectors["like_btn"])
-                except:
-                    print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (like button not found))")
+                
+                # Get like title text
+                like_title_selector = self.selectors["like_btn"] + " svg"
+                like_title = self.get_attrib (like_title_selector, "aria-label")
+                
+                if like_title and like_title.lower().strip() == "like":
+                
+                    try:
+                        self.click_js(self.selectors["like_btn"])
+                    except:
+                        print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (like button not found))")
+                    else:
+                        self.__wait__ (f"\tpost {post_links.index(post_link) + 1} / {max_posts} liked")
+                        
                 else:
-                    self.__wait__ (f"\tpost {post_links.index(post_link) + 1} / {max_posts} liked")
-                    
+                    print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (already liked)")
+                        
             # Update status of the user in database
             self.database.run_sql (f"UPDATE users SET status = 'followed' WHERE user = '{user}'")
     

@@ -36,6 +36,8 @@ class Bot (WebScraping):
             "users_followers": ".x7r02ix.xf1ldfh.x131esax .xt0psk2 > .xt0psk2 > a",
             "users_followers_wrapper": '[role="dialog"] ._aano',
             "users_followers_load_more": "",
+            "follow_btn": "header button._acan._acap._acas._aj1-",
+            "like_btn": "span:first-child button._abl-",
         }
     
         # Start chrome
@@ -144,6 +146,20 @@ class Bot (WebScraping):
         time.sleep (10)
         self.refresh_selenium ()
         
+    def __get_post__ (self, max_post = 100): 
+        """
+        Get the post links of the current user
+        """
+        
+        print ("Getting post...")
+        
+        # Get number of post of the user 
+        post_links = self.get_attribs(self.selectors["post"], "href")
+        if len(post_links) > max_post: 
+            post_links = post_links[:max_post]
+
+        return post_links
+        
     def __follow_like_users__ (self, max_posts:int=3):
         """ Follow and like posts of users from a profile_links
 
@@ -159,36 +175,30 @@ class Bot (WebScraping):
         
         for user in users:
             
-            # Set user page
+            # Set user page1
             self.__set_page_wait__ (user)
             
             # Follow user
-            follow_text = self.get_text (self.selectors["follow"])
-            if follow_text.lower().strip() == "follow":
-                self.click_js (self.selectors["follow"])
+            follow_text = self.get_text (self.selectors["follow_btn"])
+            if follow_text and follow_text.lower().strip() == "follow":
+                self.click_js (self.selectors["follow_btn"])
                 self.__wait__ (f"user followed: {user}")
             else:
                 self.__wait__ (f"user already followed: {user}")
             
-            # Get posts of user
-            posts_elems = self.get_elems (self.selectors["post"])
-            if len(posts_elems) > max_posts:
-                posts_elems = posts_elems[:max_posts]
+            # Get number of post of the user 
+            post_links = self.__get_post__ (3)
             
-            # loop posts to like
-            for post in posts_elems:
+            # Like each post (the last three)
+            for post_link in post_links: 
                 
-                # Like post
-                try:
-                    like_button = post.find_element(By.CSS_SELECTOR, self.selectors["like"])
-                except:
-                    continue
-                else:
-                    like_button.click ()
-                        
-                    # Wait after like
-                    post_index = posts_elems.index(post) + 1
-                    self.__wait__ (f"\tpost liked: {post_index}/{max_posts}")
+                self.__set_page_wait__ (post_link)
+                self.refresh_selenium ()
+                self.click_js(self.selectors["like_btn"])
+                self.__wait__ (f"\tPost {post_links.index(post_link) + 1} / 3 liked")
+                    
+            # Update status of the user in database
+            self.database.run_sql (f"UPDATE users SET status = 'followed' WHERE user = '{user}'")
                              
     def __get_unfollow_users__ (self) -> list:
         """ Request to the user the list of followed users from text files
@@ -314,27 +324,36 @@ class Bot (WebScraping):
     
         return profile_links
     
-    def __count_users_to_follow__ (self) -> int:
-        """ Count users to follow already in database
+    def __count_users__ (self, status:str) -> int:
+        """ Count users in database with specific status
+
+        Args:
+            status (str): statuc to count
 
         Returns:
-            int: number of users to follow in database
+            int: number of users with status
         """
         
-        users_to_follow_num = self.database.run_sql (f"SELECT COUNT(user) FROM users WHERE status = 'to follow'")[0][0]
+        users_to_follow_num = self.database.run_sql (f"SELECT COUNT(user) FROM users WHERE status = '{status}'")[0][0]
         return users_to_follow_num
-        
     
     def auto_follow (self):
                 
         print ("FOLLOWING USERS:\n")
         
-        # Count user to follow already in database
-        users_to_follow_num = self.__count_users_to_follow__ ()
+        # Count user to follow or followed already in database
+        users_to_follow_num = self.__count_users__ ("to follow")
+        users_followd_num = self.__count_users__ ("followed")
+        
+        if users_followd_num > 0:
+            print (f"Users already followed: {users_followd_num}")
         
         # Calculate users to follow from each target user
-        remaining_users = self.max_follow - users_to_follow_num
+        remaining_users = self.max_follow - users_to_follow_num - users_followd_num
         max_follow_target = int(remaining_users / len(self.list_follow))
+        
+        if remaining_users > 0:
+            print (f"Users to follow: {remaining_users}")
         
         if max_follow_target > 0:
             print (f"Max users to follow from each target: {max_follow_target}")
@@ -364,8 +383,8 @@ class Bot (WebScraping):
                     
                 total_users_found += len(users_found)
                 
-        users_to_follow_num = self.__count_users_to_follow__ ()
-        print (f"\n{users_to_follow_num} users found")
+        users_to_follow_num = self.__count_users__ ("to follow")
+        print (f"\n{users_to_follow_num} users prepared to follow")
 
         self.__follow_like_users__ ()
      

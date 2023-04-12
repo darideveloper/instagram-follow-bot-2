@@ -188,7 +188,7 @@ class Bot (WebScraping):
                 try:
                     self.click_js(self.selectors["like_btn"])
                 except:
-                    print ("Like button not found. Post skipped")
+                    print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (like button not found))")
                 else:
                     self.__wait__ (f"\tpost {post_links.index(post_link) + 1} / {max_posts} liked")
                     

@@ -48,7 +48,7 @@ class Bot (WebScraping):
         # Conneact with database and create tables
         self.database = DataBase("bot")
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char)")
-        self.database.run_sql ("CREATE TABLE IF NOT EXISTS status (status char)")
+        self.database.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
     
     def __wait__ (self, message:str=""):
         """ Wait time and show message
@@ -343,7 +343,6 @@ class Bot (WebScraping):
         """ Follow users from list of target users
         """
         
-        
         print ("\n-----------------------------")
         print ("FOLLOWING USERS:")
         print ("-----------------------------")
@@ -408,8 +407,12 @@ class Bot (WebScraping):
         
         # Select users to unfollow
         unfollow_users_data = self.database.run_sql (f"SELECT user FROM users WHERE status = 'followed'")
-        unfollow_users = list(map(lambda user: user[0], unfollow_users_data))
-        unfollow_users_num = len(unfollow_users)
+        if unfollow_users_data:
+            unfollow_users = list(map(lambda user: user[0], unfollow_users_data))
+            unfollow_users_num = len(unfollow_users)
+        else:
+            unfollow_users = []
+            unfollow_users_num = 0
         
         # Fix unfollow usersut
         if unfollow_users_num > self.max_follow:
@@ -438,6 +441,24 @@ class Bot (WebScraping):
                 self.database.run_sql (f"UPDATE users SET status = 'unfollowed' WHERE user = '{user}'")
                 
                 self.__wait__ (f"\t{user} unfollowed")
+                
+    def auto_run (self):
+        """ Run auto_follow and auto_unfollow functions in loop, using status from database
+        """
+        
+        while True:
+        
+            # get status from database
+            status = self.database.run_sql ("select value from settings where name = 'status' ")[0][0]
             
+            # Run follow or unfollow based in status from database
+            if status == "follow":
+                self.auto_follow ()
+                self.database.run_sql ("update settings set value = 'unfollow' where name = 'status'")
+            elif status == "unfollow":
+                self.auto_unfollow ()
+                self.database.run_sql ("update settings set value = 'follow' where name = 'status'")
+                
+            print ()
             
     

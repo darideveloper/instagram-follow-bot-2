@@ -78,6 +78,8 @@ class Bot (WebScraping):
                                 
         # Get users from database already followerd
         skip_users_data = self.database.run_sql ("SELECT user FROM users WHERE status = 'followed' or status = 'unfollowed'")
+        if not skip_users_data:
+            skip_users_data = []
         skip_users = list(map(lambda user: user[0], skip_users_data))
         
         more_links = True

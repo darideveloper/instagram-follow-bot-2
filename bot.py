@@ -61,8 +61,8 @@ class Bot (WebScraping):
         if message:
             print (message)
     
-    def __load_links__ (self, selector_link:str, selector_wrapper:str, load_more_selector:str, 
-                        scroll_by:int, max_users:int, skip_users:list) -> list: 
+    def __get_profiles__ (self, selector_link:str, selector_wrapper:str, load_more_selector:str, 
+                        scroll_by:int, max_users:int) -> list: 
         """ get links from scrollable element
 
         Args:
@@ -71,13 +71,14 @@ class Bot (WebScraping):
             load_more_selector (str): Selector of button for load more links.
             scroll_by (int): number of pixels to scroll down
             max_users (int): max number of links to get
-            skip_users (list): list of users to skip
             
         Returns:
             list: list of links found
         """
                                 
-        # TODO: get already followed from database
+        # Get users from database already followerd
+        skip_users_data = self.database.run_sql ("SELECT user FROM users WHERE status = 'followed' or status = 'unfollowed'")
+        skip_users = list(map(lambda user: user[0], skip_users_data))
         
         more_links = True
         links_found = []
@@ -174,7 +175,7 @@ class Bot (WebScraping):
                 self.click_js (self.selectors["follow_btn"])
                 self.__wait__ (f"\tuser followed: {user}")
             else:
-                self.__wait__ (f"\tuser already followed: {user}")
+                self.__wait__ (f"\tuser already followed")
             
             # Get number of post of the user 
             post_links = self.__get_post__ (max_posts)
@@ -190,13 +191,12 @@ class Bot (WebScraping):
             # Update status of the user in database
             self.database.run_sql (f"UPDATE users SET status = 'followed' WHERE user = '{user}'")
     
-    def __get_users_posts__ (self, target_user:str, max_users:int, skip_users:list=[]) -> list:
+    def __get_users_posts__ (self, target_user:str, max_users:int) -> list:
         """ Load user to follow from target posts comments and likes
         
         Args:
             target_user (str): user target to get followers
             max_users (int): max users to follow from target
-            skip_users (list, optional): list of users to skip. Defaults to [].
 
         Returns:
             list: list of users found
@@ -221,43 +221,41 @@ class Bot (WebScraping):
             self.refresh_selenium ()
             
             # Go down and get profiles links from likes
-            profile_links += self.__load_links__ (
+            profile_links += self.__get_profiles__ (
                 self.selectors["users_posts_likes"], 
                 self.selectors["users_posts_likes_wrapper"], 
                 self.selectors["users_posts_likes_load_more"],
                 scroll_by=2000,      
                 max_users=int(max_users/2) + 1,
-                skip_users=profile_links + skip_users            
             )
             
             # Open post comments
             self.__set_page_wait__ (post_link)
             
             # Go down and get profiles links from comments
-            profile_links += self.__load_links__ (
+            profile_links += self.__get_profiles__ (
                 self.selectors["users_posts_comments"], 
                 self.selectors["users_posts_comments_wrapper"], 
                 self.selectors["users_posts_comments_load_more"], 
                 scroll_by=4000,
                 max_users=int(max_users/2) + 1,
-                skip_users=profile_links + skip_users  
             )
             
             # End loop if max users reached
             if len(profile_links) >= max_users:
+                profile_links = profile_links[:max_users]
                 break
-            
+        
         print (f"\t\t{len(profile_links)} users found")
         
         return profile_links
 
-    def __get_users_followers__ (self, target_user:str, max_users:int, skip_users:list=[]) -> list:
+    def __get_users_followers__ (self, target_user:str, max_users:int) -> list:
         """Load user to follow from target current followers
 
         Args:
             target_user (str): user target to get followers
             max_users (int): max users to follow from target
-            skip_users (list, optional): list of users to skip. Defaults to [].
 
         Returns:
             list: list of users found
@@ -271,15 +269,14 @@ class Bot (WebScraping):
         self.set_page (url)
                 
         # Go down and get profiles links
-        profile_links = self.__load_links__ (
+        profile_links = self.__get_profiles__ (
             self.selectors["users_followers"], 
             self.selectors["users_followers_wrapper"], 
             self.selectors["users_followers_load_more"],
             scroll_by=2000,
             max_users=max_users,
-            skip_users=skip_users    
         )
-            
+                    
         print (f"\t\t{len(profile_links)} users found")
     
         return profile_links
@@ -330,12 +327,12 @@ class Bot (WebScraping):
                 
                 # Get users from target posts
                 max_follow_comments = int(max_follow_target/2)
-                users_posts = self.__get_users_posts__ (target_user, max_follow_comments, users_found)
+                users_posts = self.__get_users_posts__ (target_user, max_follow_comments)
                 users_found += users_posts
                 
                 # Get users from target followers
                 max_follow_followers = max_follow_target - len(users_found)
-                users_followers = self.__get_users_followers__ (target_user, max_follow_followers, users_found)
+                users_followers = self.__get_users_followers__ (target_user, max_follow_followers)
                 users_found += users_followers    
                 
                 print (f"\t{len(users_found)} users found from {target_user}")       
@@ -348,7 +345,7 @@ class Bot (WebScraping):
                 total_users_found += len(users_found)
                 
         users_to_follow_num = self.__count_users__ ("to follow")
-        print (f"\n{users_to_follow_num} users prepared to follow")
+        print (f"\n{users_to_follow_num} users ready to follow")
         
         if users_to_follow_num > 0:
             self.__follow_like_users__ ()

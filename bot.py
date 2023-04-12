@@ -125,18 +125,6 @@ class Bot (WebScraping):
             links_found = links_found[:max_users]
         
         return links_found
-    
-    def __save_user_history__ (self, user:str, status:str):
-        """ Save new user in history file
-
-        Args:
-            user (str): user link
-            status (str): status of the user
-        """
-        
-        with open (self.history_file, "a", newline='') as file:
-            csv_writer = csv.writer (file)
-            csv_writer.writerow ([user, status])
             
     def __set_page_wait__ (self, user:str):
         """ Open user profile and wait for load
@@ -152,9 +140,7 @@ class Bot (WebScraping):
         """
         Get the post links of the current user
         """
-        
-        print ("Getting post...")
-        
+                
         # Get number of post of the user 
         post_links = self.get_attribs(self.selectors["post"], "href")
         if len(post_links) > max_post: 
@@ -177,6 +163,8 @@ class Bot (WebScraping):
         
         for user in users:
             
+            print (f"User {users.index(user) + 1} / {len(users)}: {user}")
+            
             # Set user page1
             self.__set_page_wait__ (user)
             
@@ -184,12 +172,12 @@ class Bot (WebScraping):
             follow_text = self.get_text (self.selectors["follow_btn"])
             if follow_text and follow_text.lower().strip() == "follow":
                 self.click_js (self.selectors["follow_btn"])
-                self.__wait__ (f"user followed: {user}")
+                self.__wait__ (f"\tuser followed: {user}")
             else:
-                self.__wait__ (f"user already followed: {user}")
+                self.__wait__ (f"\tuser already followed: {user}")
             
             # Get number of post of the user 
-            post_links = self.__get_post__ (3)
+            post_links = self.__get_post__ (max_posts)
             
             # Like each post (the last three)
             for post_link in post_links: 
@@ -197,40 +185,10 @@ class Bot (WebScraping):
                 self.__set_page_wait__ (post_link)
                 self.refresh_selenium ()
                 self.click_js(self.selectors["like_btn"])
-                self.__wait__ (f"\tPost {post_links.index(post_link) + 1} / 3 liked")
+                self.__wait__ (f"\tpost {post_links.index(post_link) + 1} / {max_posts} liked")
                     
             # Update status of the user in database
             self.database.run_sql (f"UPDATE users SET status = 'followed' WHERE user = '{user}'")
-                             
-    def __get_unfollow_users__ (self) -> list:
-        """ Request to the user the list of followed users from text files
-
-        Returns:
-            list: list of followed users to unfollow
-        """
-        
-        # Request follow file to user
-        manu_options = ["1", "2"]
-        while True:
-            print ("1. Follow Advanced")
-            print ("2. Follow Classic")
-            option = input ("Select folloed list, for unfollow: ")
-            if option not in manu_options: 
-                print ("\nInvalid option")
-                continue
-            else:
-                break
-        
-        # Select followed list 
-        if option == "1": 
-            followed = self.followed_advanced
-        elif option == "2":
-            followed = self.followed_classic
-            
-        # Remove users already unfollowed
-        followed = list(filter(lambda user: user not in self.unfollowed, followed))
-        
-        return followed
     
     def __get_users_posts__ (self, target_user:str, max_users:int, skip_users:list=[]) -> list:
         """ Load user to follow from target posts comments and likes

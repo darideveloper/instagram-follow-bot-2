@@ -38,6 +38,8 @@ class Bot (WebScraping):
             "users_followers_load_more": "",
             "follow_btn": "header button._acan._acap._acas._aj1-",
             "like_btn": "span:first-child button._abl-",
+            "unfollow_btn": "header button._acan._acap._aj1-", 
+            "unfollow_confirm_btn": '.x1cy8zhl .x9f619 > div[role="button"]:last-child',
         }
     
         # Start chrome
@@ -338,8 +340,13 @@ class Bot (WebScraping):
         return users_to_follow_num
     
     def auto_follow (self):
-                
-        print ("FOLLOWING USERS:\n")
+        """ Follow users from list of target users
+        """
+        
+        
+        print ("\n-----------------------------")
+        print ("FOLLOWING USERS:")
+        print ("-----------------------------")
         
         # Count user to follow or followed already in database
         users_to_follow_num = self.__count_users__ ("to follow")
@@ -385,14 +392,30 @@ class Bot (WebScraping):
                 
         users_to_follow_num = self.__count_users__ ("to follow")
         print (f"\n{users_to_follow_num} users prepared to follow")
-
-        self.__follow_like_users__ ()
+        
+        if users_to_follow_num > 0:
+            self.__follow_like_users__ ()
+        
+        print ("Done.")
      
-    def unfollow (self):
-        """ Unfollow users """
+    def auto_unfollow (self):
+        """ Unfollow users already followed
+        """
+        
+        print ("\n-----------------------------")
+        print ("UNFOLLOW USERS:")
+        print ("-----------------------------")
         
         # Select users to unfollow
-        unfollow_users = self.__get_unfollow_users__ () 
+        unfollow_users_data = self.database.run_sql (f"SELECT user FROM users WHERE status = 'followed'")
+        unfollow_users = list(map(lambda user: user[0], unfollow_users_data))
+        unfollow_users_num = len(unfollow_users)
+        
+        # Fix unfollow usersut
+        if unfollow_users_num > self.max_follow:
+            unfollow_users = unfollow_users[:self.max_follow]
+        
+        print (f"{unfollow_users_num} users to unfollow")
         
         # Unfollow each user
         for user in unfollow_users:
@@ -401,19 +424,20 @@ class Bot (WebScraping):
             self.__set_page_wait__ (user)
             
             # Unfollow user
-            unfollow_text = self.get_text (self.selectors["unfollow"])
-            if unfollow_text.lower().strip() == "following":
-                self.click_js (self.selectors["unfollow"])
+            unfollow_text = self.get_text (self.selectors["unfollow_btn"])
+            if unfollow_text.lower().strip() != "following":    
+                self.__wait__ (f"\t{user} already unfollowed")
+            else:
+                self.click_js (self.selectors["unfollow_btn"])
                 self.refresh_selenium ()
                 
                 # Confirm unfollow
-                self.click_js (self.selectors["confirm_unfollow"])
+                self.click_js (self.selectors["unfollow_confirm_btn"])
                 
-                # Save user in history
-                self.__save_user_history__ (user, "unfollowed")
+                # Update user status in database
+                self.database.run_sql (f"UPDATE users SET status = 'unfollowed' WHERE user = '{user}'")
                 
-                # Wait after unfollow
-                self.__wait__ (f"user unfollowed: {user}")
+                self.__wait__ (f"\t{user} unfollowed")
             
             
     

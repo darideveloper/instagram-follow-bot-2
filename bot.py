@@ -49,6 +49,11 @@ class Bot (WebScraping):
         self.database = DataBase("bot")
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char)")
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
+        
+        # Create default status to "follow"
+        status = self.database.run_sql ("select value from settings where name = 'status' ")
+        if not status:
+            self.database.run_sql ("INSERT INTO settings (name, value) VALUES ('status', 'follow') ON CONFLICT DO NOTHING")
     
     def __wait__ (self, message:str=""):
         """ Wait time and show message

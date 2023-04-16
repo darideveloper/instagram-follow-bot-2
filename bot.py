@@ -2,7 +2,7 @@ import os
 import json
 import time
 import random
-import config
+from dotenv import load_dotenv
 from database import DataBase
 from selenium.webdriver.common.by import By
 from scraping_manager.automate import WebScraping
@@ -13,6 +13,9 @@ class Bot (WebScraping):
         """ Constructor of class
         """
         
+        # Load environment variables
+        load_dotenv ()
+        
         # paths
         self.current_folder = os.path.dirname (__file__)
         self.proxies_path = os.path.join (self.current_folder, "proxies.json")
@@ -21,12 +24,11 @@ class Bot (WebScraping):
         # Get proxy
         self.proxy = self.__get_random_proxy__ ()
         
-        # Read credentials
-        self.debug = config.get_credential ("debug")
-        self.headless = config.get_credential ("headless")
-        self.list_follow = config.get_credential ("list_follow")
-        self.max_follow = config.get_credential ("max_follow")
-        self.chrome_folder = config.get_credential ("chrome_folder")
+        # Read environment variables
+        self.headless = os.getenv ("HEADLESS", "true") == "true"
+        self.target_users = os.getenv ("target_users").split(",")
+        self.max_follow = int (os.getenv ("max_follow", 0))
+        self.chrome_folder = os.getenv ("chrome_folder", "")
         
         # History file
         self.history_file = os.path.join (os.path.dirname (__file__), "history.csv")
@@ -357,7 +359,7 @@ class Bot (WebScraping):
         
         # Calculate users to follow from each target user
         remaining_users = self.max_follow - users_to_follow_num - users_followd_num
-        max_follow_target = int(remaining_users / len(self.list_follow))
+        max_follow_target = int(remaining_users / len(self.target_users))
         
         if remaining_users > 0:
             print (f"Users to follow: {remaining_users}")
@@ -366,7 +368,7 @@ class Bot (WebScraping):
             print (f"Max users to follow from each target: {max_follow_target}")
         
             total_users_found = 0
-            for target_user in self.list_follow:
+            for target_user in self.target_users:
                 
                 users_found = []
                 print (f"\nGetting users from: {target_user}")

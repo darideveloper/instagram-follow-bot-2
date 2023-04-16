@@ -4,13 +4,12 @@ import time
 import logging
 import zipfile
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException
-from webdriver_manager.chrome import ChromeDriverManager, ChromeType
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from webdriver_manager.chrome import ChromeDriverManager, ChromeType
 
 current_file = os.path.basename(__file__)
   
@@ -39,21 +38,20 @@ class WebScraping ():
         self.basetime = 1
 
         # variables of class 
-        self.__headless = headless
-        self.__current_dir = os.path.dirname (__file__)
-        self.__web_page = web_page
-        self.__proxy_server = proxy_server
-        self.__proxy_port = proxy_port
-        self.__proxy_user = proxy_user
-        self.__proxy_pass = proxy_pass
-        self.__pluginfile = 'proxy_auth_plugin.zip'
-        self.__chrome_folder = chrome_folder
-        self.__user_agent = user_agent
-        self.__capabilities = capabilities
-        self.__download_folder = download_folder
-        self.__extensions = extensions
-        self.__incognito = incognito
-        self.__experimentals = experimentals
+        self.__headless__ = headless
+        self.__web_page__ = web_page
+        self.__proxy_server__ = proxy_server
+        self.__proxy_port__ = proxy_port
+        self.__proxy_user__ = proxy_user
+        self.__proxy_pass__ = proxy_pass
+        self.__pluginfile__ = 'proxy_auth_plugin.zip'
+        self.__chrome_folder__ = chrome_folder
+        self.__user_agent__ = user_agent
+        self.__capabilities__ = capabilities
+        self.__download_folder__ = download_folder
+        self.__extensions__ = extensions
+        self.__incognito__ = incognito
+        self.__experimentals__ = experimentals
 
 
         # Kill chrome from CMD in donwows
@@ -64,7 +62,7 @@ class WebScraping ():
             print ("Ok\n")
 
         # Create and instance of the web browser 
-        self.__set_browser_instance()
+        self.__set_browser_instance__()
         
         # Get current file name
         self.current_file = os.path.basename(__file__)
@@ -73,11 +71,11 @@ class WebScraping ():
         if time_out > 0: 
             self.driver.set_page_load_timeout(time_out)
 
-        if self.__web_page:
-            self.set_page (self.__web_page)
+        if self.__web_page__:
+            self.set_page (self.__web_page__)
         
 
-    def __set_browser_instance (self):
+    def __set_browser_instance__ (self):
         """
         Open and configure browser
         """
@@ -97,44 +95,44 @@ class WebScraping ():
         options.add_argument("--safebrowsing-disable-download-protection")
 
         # Experimentals
-        if self.__experimentals:
+        if self.__experimentals__:
             options.add_experimental_option('excludeSwitches', ['enable-logging', "enable-automation"])
             options.add_experimental_option('useAutomationExtension', False)
         
-        if self.__headless:        
+        if self.__headless__:        
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--headless")
         
         # Set proxy without autentication
-        if (self.__proxy_server and self.__proxy_port 
-            and not self.__proxy_user and not self.__proxy_pass):
+        if (self.__proxy_server__ and self.__proxy_port__ 
+            and not self.__proxy_user__ and not self.__proxy_pass__):
             
-            proxy = f"{self.__proxy_server}:{self.__proxy_port}"
+            proxy = f"{self.__proxy_server__}:{self.__proxy_port__}"
             options.add_argument(f"--proxy-server={proxy}")
         
         # Set proxy with autentification 
-        if (self.__proxy_server and self.__proxy_port 
-            and self.__proxy_user and self.__proxy_pass):
+        if (self.__proxy_server__ and self.__proxy_port__ 
+            and self.__proxy_user__ and self.__proxy_pass__):
             
-            self.__create_proxy_extesion()
-            options.add_extension(self.__pluginfile)
+            self.__create_proxy_extesion__()
+            options.add_extension(self.__pluginfile__)
 
         # Set chrome folder
-        if self.__chrome_folder:
-            options.add_argument(f"--user-data-dir={self.__chrome_folder}")
+        if self.__chrome_folder__:
+            options.add_argument(f"--user-data-dir={self.__chrome_folder__}")
 
         # Set default user agent
-        if self.__user_agent:
+        if self.__user_agent__:
             options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36')
         
-        if self.__capabilities:
+        if self.__capabilities__:
             capabilities = DesiredCapabilities.CHROME
             capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         else: 
             capabilities = None
 
-        if self.__download_folder:
-            prefs = {"download.default_directory" : f"{self.__download_folder}", 
+        if self.__download_folder__:
+            prefs = {"download.default_directory" : f"{self.__download_folder__}", 
                     "download.prompt_for_download": "false",
                     'profile.default_content_setting_values.automatic_downloads': 1,
                     'profile.default_content_settings.popups': 0,
@@ -147,14 +145,14 @@ class WebScraping ():
 
             options.add_experimental_option("prefs",prefs)
 
-        if self.__extensions:
-            for extension in self.__extensions:
+        if self.__extensions__:
+            for extension in self.__extensions__:
                 options.add_extension(extension)
 
-        if self.__incognito:
+        if self.__incognito__:
             options.add_argument("--incognito")
 
-        if self.__experimentals:
+        if self.__experimentals__:
             options.add_argument("--disable-blink-features=AutomationControlled")
 
 
@@ -169,7 +167,7 @@ class WebScraping ():
         # Clean terminal
         # os.system('cls||clear')
             
-    def __create_proxy_extesion (self): 
+    def __create_proxy_extesion__ (self): 
         """Create a proxy chrome extension"""
         
         # plugin data
@@ -223,10 +221,10 @@ class WebScraping ():
                     {urls: ["<all_urls>"]},
                     ['blocking']
         );
-        """ % (self.__proxy_server, self.__proxy_port, self.__proxy_user, self.__proxy_pass)
+        """ % (self.__proxy_server__, self.__proxy_port__, self.__proxy_user__, self.__proxy_pass__)
 
         # Compress file
-        with zipfile.ZipFile(self.__pluginfile, 'w') as zp:
+        with zipfile.ZipFile(self.__pluginfile__, 'w') as zp:
             zp.writestr("manifest.json", manifest_json)
             zp.writestr("background.js", background_js)
     
@@ -259,7 +257,6 @@ class WebScraping ():
         
         return self.driver
     
-    
     def end_browser (self): 
         """
         End current instance of web browser
@@ -267,17 +264,15 @@ class WebScraping ():
         
         self.driver.quit ()
     
-    
-    def __reload_browser (self): 
+    def __reload_browser__ (self): 
         """
         Close the current instance of the web browser and reload in the same page
         """
 
         self.end_browser()
         self.driver = self.get_browser()
-        self.driver.get (self.__web_page)
+        self.driver.get (self.__web_page__)
 
-    
     def send_data (self, selector, data): 
         """
         Send data to specific input fill
@@ -286,7 +281,6 @@ class WebScraping ():
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         elem.send_keys (data)
 
-    
     def click (self, selector): 
         """
         Send click to specific element in the page
@@ -294,7 +288,6 @@ class WebScraping ():
         
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         elem.click()
-    
     
     def wait_load (self, selector, time_out = 10, refresh_back_tab=-1): 
         """
@@ -321,7 +314,6 @@ class WebScraping ():
                     continue
             else: 
                 raise Exception ("Time out exeded. The element {} is not in the page".format (selector))
-    
         
     def wait_die (self, selector, time_out = 10): 
         """
@@ -344,7 +336,6 @@ class WebScraping ():
             else: 
                 raise Exception ("Time out exeded. The element {} is until in the page".format (selector))    
     
-    
     def get_text (self, selector):
         """
         Return text for specific element in the page
@@ -357,7 +348,6 @@ class WebScraping ():
             # print (err)
             return None
         
-    
     def get_texts (self, selector):
         """
         Return a list of text for specific selector
@@ -379,7 +369,6 @@ class WebScraping ():
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         self.driver.execute_script(f"arguments[0].setAttribute('{attrib_name}', '{attrib_value}');", elem)
     
-     
     def get_attrib (self, selector, attrib_name): 
         """
         Return the class value from specific element in the page
@@ -390,8 +379,7 @@ class WebScraping ():
             return elem.get_attribute(attrib_name)
         except:
             return None
-        
-        
+         
     def get_attribs (self, selector, attrib_name, allow_duplicates=True, allow_empty=True): 
         """
         Return the attributes value from specific element in the page
@@ -428,7 +416,6 @@ class WebScraping ():
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         return elem
     
-    
     def get_elems (self, selector):
         """
         Return a list of specific element in the page
@@ -437,12 +424,11 @@ class WebScraping ():
         elems = self.driver.find_elements(By.CSS_SELECTOR, selector)
         return elems
     
-    
     def set_page_js (self, web_page, new_tab=False): 
         """Open page with js, in current or new tab
         """
         
-        self.__web_page = web_page
+        self.__web_page__ = web_page
         
         if new_tab:
             script = f'window.open("{web_page}");'
@@ -460,13 +446,13 @@ class WebScraping ():
         
         try:
             
-            self.__web_page = web_page
+            self.__web_page__ = web_page
             
             # Save time out when is greader than 0
             if time_out > 0:  
                 self.driver.set_page_load_timeout(time_out)
             
-            self.driver.get(self.__web_page)
+            self.driver.get(self.__web_page__)
             
         # Catch error in load page
         except TimeoutException: 
@@ -479,9 +465,6 @@ class WebScraping ():
             else: 
                 self.driver.execute_script("window.stop();")
 
-
-    
-    
     def click_js (self, selector): 
         """
         Send click with js, for hiden elements
@@ -489,8 +472,7 @@ class WebScraping ():
         
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         self.driver.execute_script("arguments[0].click();", elem)
-        
-    
+         
     def select_drop_down_index (self, selector, index): 
         """
         Select specific elemet (with number) in a drop down elemet
@@ -505,7 +487,6 @@ class WebScraping ():
         select_elem = Select(self.get_elem (selector))
         select_elem.select_by_visible_text (text)
     
-    
     def go_bottom (self, selector:str="body"): 
         """
         Go to the end of the page, sending keys
@@ -513,7 +494,6 @@ class WebScraping ():
         
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         elem.send_keys(Keys.CONTROL + Keys.END)
-    
     
     def go_top (self, selector:str="body"): 
         """
@@ -523,7 +503,6 @@ class WebScraping ():
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         elem.send_keys(Keys.CONTROL + Keys.UP)
     
-    
     def go_down (self, selector:str="body"): 
         """
         advance to down, in the page, sending keys
@@ -531,7 +510,6 @@ class WebScraping ():
         
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         elem.send_keys(Keys.PAGE_DOWN)
-    
     
     def go_up (self, selector:str="body"): 
         """
@@ -541,15 +519,13 @@ class WebScraping ():
         elem = self.driver.find_element(By.CSS_SELECTOR, selector)
         elem.send_keys(Keys.PAGE_UP)
     
-    
     def switch_to_main_frame (self): 
         """
         Switch to the main contecnt of the page
         """
         
         self.driver.switch_to.default_content ()
-    
-    
+      
     def switch_to_frame (self, frame_selector): 
         """
         Switch to iframe inside the main content
@@ -557,23 +533,20 @@ class WebScraping ():
 
         frame = self.get_elem (frame_selector)
         self.driver.switch_to.frame(frame)
-
-
+        
     def open_tab (self): 
         """
         Create new empty tab in browser
         """
 
         self.driver.execute_script("window.open('');")
-
-    
+ 
     def close_tab (self): 
         """
         Clase the current tab in the browser
         """
 
         self.driver.close()
-
     
     def switch_to_tab (self, number): 
         """
@@ -582,7 +555,6 @@ class WebScraping ():
 
         windows = self.driver.window_handles
         self.driver.switch_to.window(windows[number])
-    
     
     def refresh_selenium (self, time_units=1, back_tab=0): 
         """

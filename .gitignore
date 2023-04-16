@@ -1,5 +1,9 @@
 *.csv
-*.json
 __pycache__
 temp.*
 bot.db
+cookies.json
+proxies.json
+config.json
+.env
+proxy_auth_plugin.zip

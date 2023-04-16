@@ -1,5 +1,5 @@
 import os
-import csv
+import json
 import time
 import random
 import config
@@ -12,6 +12,14 @@ class Bot (WebScraping):
     def __init__ (self):
         """ Constructor of class
         """
+        
+        # paths
+        self.current_folder = os.path.dirname (__file__)
+        self.proxies_path = os.path.join (self.current_folder, "proxies.json")
+        self.cookies_path = os.path.join (self.current_folder, "cookies.json")
+        
+        # Get proxy
+        self.proxy = self.__get_random_proxy__ ()
         
         # Read credentials
         self.debug = config.get_credential ("debug")
@@ -43,7 +51,8 @@ class Bot (WebScraping):
         }
     
         # Start chrome
-        super ().__init__ (headless=self.headless, chrome_folder=self.chrome_folder, start_killing=True)
+        super ().__init__ (headless=self.headless, chrome_folder=self.chrome_folder, start_killing=True,
+                           proxy_server=self.proxy["host"], proxy_port=self.proxy["port"], proxy_user=self.proxy["user"], proxy_pass=self.proxy["password"],)
         
         # Conneact with database and create tables
         self.database = DataBase("bot")
@@ -54,6 +63,22 @@ class Bot (WebScraping):
         status = self.database.run_sql ("select value from settings where name = 'status' ")
         if not status:
             self.database.run_sql ("INSERT INTO settings (name, value) VALUES ('status', 'follow') ON CONFLICT DO NOTHING")
+    
+    def __get_random_proxy__ (self) -> dict:
+        """ Get random proxy from 'proxies.json' file
+
+        Returns:
+            dict: proxy data: user, password, host, port
+        """
+        
+        # read proxies
+        with open (self.proxies_path, "r") as file:
+            proxies = json.load (file)
+            
+        # Select random proxy
+        proxy = random.choice (proxies)
+        
+        return proxy
     
     def __wait__ (self, message:str=""):
         """ Wait time and show message

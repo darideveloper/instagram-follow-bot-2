@@ -1,0 +1,14 @@
+[
+    {
+        "user": "username",
+        "password": "mypass",
+        "host": "123.123.123.123",
+        "port": "1234"
+    },
+    {
+        "user": "username2",
+        "password": "mypass",
+        "host": "123.123.123.234",
+        "port": "2345"
+    }
+]

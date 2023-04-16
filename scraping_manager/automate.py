@@ -1,5 +1,5 @@
 import os
-import sys
+import json
 import time
 import logging
 import zipfile
@@ -30,7 +30,7 @@ class WebScraping ():
             proxy_server="", proxy_port="", proxy_user="", proxy_pass="", 
             chrome_folder="", user_agent=False, capabilities=False,
             download_folder="", extensions=[], incognito=False, experimentals=True, 
-            start_killing=False): 
+            start_killing=False, cookies_path=""): 
         """
         Constructor of the class
         """
@@ -52,6 +52,7 @@ class WebScraping ():
         self.__extensions__ = extensions
         self.__incognito__ = incognito
         self.__experimentals__ = experimentals
+        self.__cookies_path__ = cookies_path
 
 
         # Kill chrome from CMD in donwows
@@ -73,7 +74,36 @@ class WebScraping ():
 
         if self.__web_page__:
             self.set_page (self.__web_page__)
+
+    def __get_cookies__ (self) -> list:
+        """ Get list of cookies, formatted, from 'cookies.json' file
+
+        Returns:
+            list: dictionaries of cookies
+        """
         
+        # read cookies
+        with open (self.__cookies_path__, "r") as file:
+            cookies = json.load (file)
+        
+        # Format cookies 
+        cookies_formatted = []
+        for cookie in cookies:
+            
+            # rename expiration date
+            cookie["expiry"] = cookies["expirationDate"]
+            del cookie["expirationDate"]
+            
+            # remove unnecessary keys
+            del cookie["hostOnly"]
+            del cookie["sameSite"]
+            del cookie["session"]
+            del cookie["storeId"]
+            del cookie["id"]
+            
+            cookies_formatted.append (cookie)
+            
+        return cookies_formatted   
 
     def __set_browser_instance__ (self):
         """
@@ -154,7 +184,11 @@ class WebScraping ():
 
         if self.__experimentals__:
             options.add_argument("--disable-blink-features=AutomationControlled")
-
+            
+        if self.__cookies_path__:
+            cookies = self.__get_cookies__()
+            for cookie in cookies:
+                self.driver.add_cookie(cookie)
 
         
         # Set configuration to  and create instance
@@ -163,9 +197,6 @@ class WebScraping ():
                                 options=options, 
                                 service_log_path=None,
                                 desired_capabilities=capabilities)
-
-        # Clean terminal
-        # os.system('cls||clear')
             
     def __create_proxy_extesion__ (self): 
         """Create a proxy chrome extension"""

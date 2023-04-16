@@ -54,7 +54,9 @@ class Bot (WebScraping):
     
         # Start chrome
         super ().__init__ (headless=self.headless, chrome_folder=self.chrome_folder, start_killing=True,
-                           proxy_server=self.proxy["host"], proxy_port=self.proxy["port"], proxy_user=self.proxy["user"], proxy_pass=self.proxy["password"],)
+                           proxy_server=self.proxy["host"], proxy_port=self.proxy["port"], 
+                           proxy_user=self.proxy["user"], proxy_pass=self.proxy["password"],
+                           cookies_path=self.cookies_path)
         
         # Conneact with database and create tables
         self.database = DataBase("bot")
@@ -80,7 +82,7 @@ class Bot (WebScraping):
         # Select random proxy
         proxy = random.choice (proxies)
         
-        return proxy
+        return proxy     
     
     def __wait__ (self, message:str=""):
         """ Wait time and show message

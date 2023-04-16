@@ -72,8 +72,15 @@ class WebScraping ():
         if time_out > 0: 
             self.driver.set_page_load_timeout(time_out)
 
+        # open page
         if self.__web_page__:
             self.set_page (self.__web_page__)
+            
+        # Load cookies
+        if self.__cookies_path__:
+            cookies = self.__get_cookies__()
+            for cookie in cookies:
+                self.driver.add_cookie(cookie)
 
     def __get_cookies__ (self) -> list:
         """ Get list of cookies, formatted, from 'cookies.json' file
@@ -91,8 +98,9 @@ class WebScraping ():
         for cookie in cookies:
             
             # rename expiration date
-            cookie["expiry"] = cookies["expirationDate"]
-            del cookie["expirationDate"]
+            if "expirationDate" in cookie:
+                cookie["expiry"] = int(cookie["expirationDate"])
+                del cookie["expirationDate"]
             
             # remove unnecessary keys
             del cookie["hostOnly"]
@@ -100,6 +108,10 @@ class WebScraping ():
             del cookie["session"]
             del cookie["storeId"]
             del cookie["id"]
+            
+            # Fix domain
+            if cookie["domain"].startswith ("."):
+                cookie["domain"] = cookie["domain"][1:]
             
             cookies_formatted.append (cookie)
             
@@ -184,12 +196,6 @@ class WebScraping ():
 
         if self.__experimentals__:
             options.add_argument("--disable-blink-features=AutomationControlled")
-            
-        if self.__cookies_path__:
-            cookies = self.__get_cookies__()
-            for cookie in cookies:
-                self.driver.add_cookie(cookie)
-
         
         # Set configuration to  and create instance
         chromedriver = ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install()
@@ -197,7 +203,7 @@ class WebScraping ():
                                 options=options, 
                                 service_log_path=None,
                                 desired_capabilities=capabilities)
-            
+                
     def __create_proxy_extesion__ (self): 
         """Create a proxy chrome extension"""
         

@@ -53,7 +53,8 @@ class Bot (WebScraping):
         }
     
         # Start chrome
-        super ().__init__ (headless=self.headless, chrome_folder=self.chrome_folder, start_killing=True,
+        super ().__init__ (headless=self.headless, chrome_folder=self.chrome_folder, 
+                           start_killing=True, web_page="https://www.instagram.com/",
                            proxy_server=self.proxy["host"], proxy_port=self.proxy["port"], 
                            proxy_user=self.proxy["user"], proxy_pass=self.proxy["password"],
                            cookies_path=self.cookies_path)

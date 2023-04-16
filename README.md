@@ -204,6 +204,7 @@ start cmd /k "python {project-folder-bot-1}\runs\autorun.py"
 - [X] Like posts
 - [X] Use proxies
 - [X] Never follow the same user twice
+- [X] Catch errors
 - [ ] Unfollow and follow process separately 
 
 See the [open issues](https://github.com/darideveloper/europeanstartups_scraper/issues) for a full list of proposed features (and known issues).

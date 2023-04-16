@@ -25,7 +25,7 @@ class Bot (WebScraping):
         self.proxy = self.__get_random_proxy__ ()
         
         # Read environment variables
-        self.headless = os.getenv ("HEADLESS", "true") == "true"
+        self.headless = False
         self.target_users = os.getenv ("target_users").split(",")
         self.max_follow = int (os.getenv ("max_follow", 0))
         self.chrome_folder = os.getenv ("chrome_folder", "")

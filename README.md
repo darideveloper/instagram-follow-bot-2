@@ -118,8 +118,6 @@ To get a local copy up and running follow these simple example steps.
    ```sh
    python -m pip install -r requirements.txt 
    ```
-3. Create a `.env` file in the project folder (more details in the `settings` section)
-
 
 # Settings
 
@@ -166,14 +164,9 @@ The `.env` (create file if not exist) file is used to save the settings of the b
 
 Sample file:
 ```bash
-headless = true
 target_users = elonmusk,freddiervega
 max_follow = 20
 ```
-
-### headless
-
-Hide (true) or show (false) the google chrome window.
 
 ### target_users
 

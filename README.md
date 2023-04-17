@@ -107,6 +107,7 @@ To get a local copy up and running follow these simple example steps.
 * [Python >=3.10](https://www.python.org/)
 * [Git](https://git-scm.com/)
 * [Chrome extension: EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg?hl=es)
+  * Note: activate the extension in ingognito mode, in the extension settigs 
 
 ## Installation
 
@@ -121,20 +122,28 @@ To get a local copy up and running follow these simple example steps.
 
 # Settings
 
+## Activate extension in incognito mode
+
+1. Go to [chrome://extensions/](chrome://extensions/)
+2. Click in the `Details` button of the `EditThisCookie` extension
+3. Activate the `Allow in incognito` option
+
 ## Cookies file
 
 The bot need the user cookies to avoid the login in the page. The cookies are saved in the `cookies.json` file (create file if not exist).
 For save the cookies, do the following steps (with the chrome extension [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg?hl=es) already installed):
 
-1. Open chrome as always
+1. Open chrome in incognito mode
 2. Open instagram
 3. Login in the page (if you are not logged in)
 4. Open the extension
 5. Click in the button `Export`
 ![export cookies screenshot](imgs/export-cookies.png)
-6. Open the file `cookies.txt` in the project folder
-7. Paste the cookies
+1. Open the file `cookies.txt` in the project folder
+2. Paste the cookies
 8. Save file
+
+note: be sure of not close the session in the browser, if you close the session the cookies will be lost. Intead of that, close incognito window and open a new one.
 
 ## Proxies file
 

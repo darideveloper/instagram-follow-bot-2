@@ -38,13 +38,14 @@ class WebScraping ():
         self.basetime = 1
 
         # variables of class 
+        self.current_folder = os.path.dirname(__file__)
         self.__headless__ = headless
         self.__web_page__ = web_page
         self.__proxy_server__ = proxy_server
         self.__proxy_port__ = proxy_port
         self.__proxy_user__ = proxy_user
         self.__proxy_pass__ = proxy_pass
-        self.__pluginfile__ = 'proxy_auth_plugin.zip'
+        self.__pluginfile__ = os.path.join(self.current_folder, 'proxy_auth_plugin.zip')
         self.__chrome_folder__ = chrome_folder
         self.__user_agent__ = user_agent
         self.__capabilities__ = capabilities

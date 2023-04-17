@@ -60,7 +60,8 @@ class Bot (WebScraping):
                            cookies_path=self.cookies_path)
         
         # Conneact with database and create tables
-        self.database = DataBase("bot")
+        database_path = os.path.join (self.current_folder, "bot.db")
+        self.database = DataBase(database_path)
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char)")
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
         

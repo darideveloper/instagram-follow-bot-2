@@ -7,3 +7,4 @@ proxies.json
 config.json
 .env
 proxy_auth_plugin.zip
+*.zip

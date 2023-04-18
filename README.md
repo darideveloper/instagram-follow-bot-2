@@ -143,7 +143,7 @@ For save the cookies, do the following steps (with the chrome extension [EditThi
 2. Paste the cookies
 8. Save file
 
-note: be sure of not close the session in the browser, if you close the session the cookies will be lost. Intead of that, close incognito window and open a new one.
+note: be sure of not close the session in the browser, if you close the session the cookies will be lost. Intead of that, close incognito window and open a new one if you need another user.
 
 ## Proxies file
 

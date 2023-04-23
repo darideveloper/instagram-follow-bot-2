@@ -18,9 +18,9 @@ class Bot (WebScraping):
         load_dotenv ()
         
         # paths
-        self.current_folder = os.path.dirname (__file__)
-        self.proxies_path = os.path.join (self.current_folder, "proxies.json")
-        self.cookies_path = os.path.join (self.current_folder, "cookies.json")
+        self.project_folder = os.path.dirname (__file__)
+        self.proxies_path = os.path.join (self.project_folder, "proxies.json")
+        self.cookies_path = os.path.join (self.project_folder, "cookies.json")
         
         # Get proxy
         self.proxy = self.__get_random_proxy__ ()
@@ -61,7 +61,7 @@ class Bot (WebScraping):
                            cookies_path=self.cookies_path)
         
         # Conneact with database and create tables
-        database_path = os.path.join (self.current_folder, "bot")
+        database_path = os.path.join (self.project_folder, "bot")
         self.database = DataBase(database_path)
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char)")
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")

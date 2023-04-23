@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from database import DataBase
 from selenium.webdriver.common.by import By
 from scraping_manager.automate import WebScraping
+from tools import date_iso
 
 class Bot (WebScraping):
     
@@ -60,9 +61,9 @@ class Bot (WebScraping):
                            cookies_path=self.cookies_path)
         
         # Conneact with database and create tables
-        database_path = os.path.join (self.current_folder, "bot.db")
+        database_path = os.path.join (self.current_folder, "bot")
         self.database = DataBase(database_path)
-        self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char)")
+        self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char)")
         self.database.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
         
         # Create default status to "follow"
@@ -241,7 +242,8 @@ class Bot (WebScraping):
                     print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (already liked)")
                         
             # Update status of the user in database
-            self.database.run_sql (f"UPDATE users SET status = 'followed' WHERE user = '{user}'")
+            today_str = date_iso.get_today_iso ()
+            self.database.run_sql (f"UPDATE users SET status = 'followed', date = '{today_str}' WHERE user = '{user}'")
     
     def __get_users_posts__ (self, target_user:str, max_users:int) -> list:
         """ Load user to follow from target posts comments and likes
@@ -392,7 +394,8 @@ class Bot (WebScraping):
                 # Save users in database
                 print (f"\tSaving users in database...")    
                 for user in users_found:
-                    self.database.run_sql (f"INSERT INTO users VALUES ('{user}', 'to follow')")
+                    today_str = date_iso.get_today_iso ()
+                    self.database.run_sql (f"INSERT INTO users VALUES ('{user}', 'to follow', '{today_str}')")
                     
                 total_users_found += len(users_found)
                 
@@ -445,7 +448,8 @@ class Bot (WebScraping):
                 self.click_js (self.selectors["unfollow_confirm_btn"])
                 
                 # Update user status in database
-                self.database.run_sql (f"UPDATE users SET status = 'unfollowed' WHERE user = '{user}'")
+                today_str = date_iso.get_today_iso ()
+                self.database.run_sql (f"UPDATE users SET status = 'unfollowed', date = '{today_str}' WHERE user = '{user}'")
                 
                 self.__wait__ (f"\t{user} unfollowed")
                 

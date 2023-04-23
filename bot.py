@@ -51,6 +51,7 @@ class Bot (WebScraping):
             "like_btn": "span:first-child button._abl-",
             "unfollow_btn": "header button._acan._acap._aj1-", 
             "unfollow_confirm_btn": '.x1cy8zhl .x9f619 > div[role="button"]:last-child',
+            "unfollow_confirm_btn_b": '.x1n2onr6.xzkaem6 .x78zum5.xdt5ytf > button',
         }
     
         # Start chrome
@@ -61,15 +62,7 @@ class Bot (WebScraping):
                            cookies_path=self.cookies_path)
         
         # Conneact with database and create tables
-        database_path = os.path.join (self.project_folder, "bot")
-        self.database = DataBase(database_path)
-        self.database.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char)")
-        self.database.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
-        
-        # Create default status to "follow"
-        status = self.database.run_sql ("select value from settings where name = 'status' ")
-        if not status:
-            self.database.run_sql ("INSERT INTO settings (name, value) VALUES ('status', 'follow') ON CONFLICT DO NOTHING")
+        self.database = DataBase()
     
     def __get_random_proxy__ (self) -> dict:
         """ Get random proxy from 'proxies.json' file
@@ -114,7 +107,9 @@ class Bot (WebScraping):
         """
                                 
         # Get users from database already followerd
-        skip_users_data = self.database.run_sql ("SELECT user FROM users WHERE status = 'followed' or status = 'unfollowed'")
+        users_followed = self.database.get_users (status="followed")
+        users_unfollowed = self.database.get_users (status="unfollowed")
+        skip_users_data = users_followed + users_unfollowed
         if not skip_users_data:
             skip_users_data = []
         skip_users = list(map(lambda user: user[0], skip_users_data))
@@ -198,7 +193,7 @@ class Bot (WebScraping):
         print ("\nStart following and liking users...")
         
         # Get users to follow from database
-        users_data = self.database.run_sql ("SELECT user FROM users WHERE status = 'to follow'")
+        users_data = self.database.get_users (status="to follow")
         users = list(map(lambda user_data: user_data[0], users_data))
         
         for user in users:
@@ -242,8 +237,7 @@ class Bot (WebScraping):
                     print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (already liked)")
                         
             # Update status of the user in database
-            today_str = date_iso.get_today_iso ()
-            self.database.run_sql (f"UPDATE users SET status = 'followed', date = '{today_str}' WHERE user = '{user}'")
+            self.database.update_user (user, "followed")
     
     def __get_users_posts__ (self, target_user:str, max_users:int) -> list:
         """ Load user to follow from target posts comments and likes
@@ -335,19 +329,6 @@ class Bot (WebScraping):
     
         return profile_links
     
-    def __count_users__ (self, status:str) -> int:
-        """ Count users in database with specific status
-
-        Args:
-            status (str): statuc to count
-
-        Returns:
-            int: number of users with status
-        """
-        
-        users_to_follow_num = self.database.run_sql (f"SELECT COUNT(user) FROM users WHERE status = '{status}'")[0][0]
-        return users_to_follow_num
-    
     def auto_follow (self):
         """ Follow users from list of target users
         """
@@ -357,8 +338,8 @@ class Bot (WebScraping):
         print ("-----------------------------")
         
         # Count user to follow or followed already in database
-        users_to_follow_num = self.__count_users__ ("to follow")
-        users_followd_num = self.__count_users__ ("followed")
+        users_to_follow_num = self.database.count_users ("to follow")
+        users_followd_num = self.database.count_users ("followed")
         
         if users_followd_num > 0:
             print (f"Users already followed: {users_followd_num}")
@@ -394,12 +375,12 @@ class Bot (WebScraping):
                 # Save users in database
                 print (f"\tSaving users in database...")    
                 for user in users_found:
-                    today_str = date_iso.get_today_iso ()
-                    self.database.run_sql (f"INSERT INTO users VALUES ('{user}', 'to follow', '{today_str}')")
+                    self.database.insert_user (user)
+                    
                     
                 total_users_found += len(users_found)
                 
-        users_to_follow_num = self.__count_users__ ("to follow")
+        users_to_follow_num = self.database.count_users ("to follow")
         print (f"\n{users_to_follow_num} users ready to follow")
         
         if users_to_follow_num > 0:
@@ -416,7 +397,7 @@ class Bot (WebScraping):
         print ("-----------------------------")
         
         # Select users to unfollow
-        unfollow_users_data = self.database.run_sql (f"SELECT user FROM users WHERE status = 'followed'")
+        unfollow_users_data = self.database.get_users ('followed')
         if unfollow_users_data:
             unfollow_users = list(map(lambda user: user[0], unfollow_users_data))
             unfollow_users_num = len(unfollow_users)
@@ -438,18 +419,21 @@ class Bot (WebScraping):
             
             # Unfollow user
             unfollow_text = self.get_text (self.selectors["unfollow_btn"])
-            if unfollow_text.lower().strip() != "following":    
+            if unfollow_text.lower().strip() not in ["following", "requested"]:    
                 self.__wait__ (f"\t{user} already unfollowed")
             else:
                 self.click_js (self.selectors["unfollow_btn"])
                 self.refresh_selenium ()
                 
                 # Confirm unfollow
-                self.click_js (self.selectors["unfollow_confirm_btn"])
+                unfollow_button = self.get_elems (self.selectors["unfollow_confirm_btn"])
+                if unfollow_button:
+                    self.click_js (self.selectors["unfollow_confirm_btn"])
+                else:
+                    self.click_js (self.selectors["unfollow_confirm_btn_b"])
                 
                 # Update user status in database
-                today_str = date_iso.get_today_iso ()
-                self.database.run_sql (f"UPDATE users SET status = 'unfollowed', date = '{today_str}' WHERE user = '{user}'")
+                self.database.update_user (user, "unfollowed")
                 
                 self.__wait__ (f"\t{user} unfollowed")
                 
@@ -460,13 +444,13 @@ class Bot (WebScraping):
         while True:
         
             # get status from database
-            status = self.database.run_sql ("select value from settings where name = 'status' ")[0][0]
+            status = self.database.get_status ()
             
             # Run follow or unfollow based in status from database
             if status == "follow":
                 self.auto_follow ()
-                self.database.run_sql ("update settings set value = 'unfollow' where name = 'status'")
+                self.database.set_status ("unfollow")
             elif status == "unfollow":
                 self.auto_unfollow ()
-                self.database.run_sql ("update settings set value = 'follow' where name = 'status'")            
+                self.database.set_status ("follow")       
     

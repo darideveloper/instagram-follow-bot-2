@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from tools import date_iso
 
 CURRENT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 
@@ -12,8 +13,20 @@ class DataBase ():
         db_path = os.path.join(CURRENT_FOLDER, f"bot.db")
         self.conn = sqlite3.connect(db_path)
         
-        # Create bot table if not exists
-        self.run_sql ("")
+        # Create db on start
+        self.__create_databse__()
+        
+    def __create_databse__ (self):
+        """ Create tables 'users' and 'settings' in database, with default values
+        """
+        
+        self.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char)")
+        self.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
+        
+        # Create default status to "follow"
+        status = self.run_sql ("select value from settings where name = 'status' ")
+        if not status:
+            self.run_sql ("INSERT INTO settings (name, value) VALUES ('status', 'follow') ON CONFLICT DO NOTHING")
         
     def run_sql (self, sql:str):
         """ Run sql command
@@ -47,11 +60,62 @@ class DataBase ():
         self.run_sql ("delete from users")
         
     
-    def get_users (self) -> list:
-        """ Get all users from database
+    def get_users (self, status:str="") -> list:
+        """ Get users from database, filtering by status if needed
+
+        Args:
+            status (str, optional): Status of the users to select. Defaults to "".
+
+        Returns:
+            list: users data
         """
         
-        return self.run_sql ("select * from users")
+        if status:
+            users = self.run_sql (f"select * from users users where status = '{status}' ")
+        else:
+            users = self.run_sql ("select * from users")
+        
+        if users:
+            return users
+        else:
+            return []
+        
+    def count_users (self, status:str="") -> int:
+        """ Get user with specific status
+
+        Args:
+            status (str, optional): Status of the users to count. Defaults to "".
+
+        Returns:
+            int: number of users found
+        """
+        
+        if status:
+            return self.run_sql (f"SELECT COUNT(user) FROM users WHERE status = '{status}'")[0][0]
+        else:
+            return self.run_sql (f"SELECT COUNT(user) FROM users")[0][0]
+    
+    def insert_user (self, user:str, status:str="to follow"):
+        """ Insert new user in users table
+
+        Args:
+            user (str): user name
+            status (str, optional): current status. Defaults to "to follow".
+        """
+        
+        today_str = date_iso.get_today_iso ()
+        self.run_sql (f"INSERT INTO users VALUES ('{user}', '{status}', '{today_str}')")
+        
+    def update_user (self, user:str, status:str):
+        """ Update user status
+
+        Args:
+            user (str): user name
+            status (str): new status
+        """
+        
+        today_str = date_iso.get_today_iso ()
+        self.run_sql (f"UPDATE users SET status = '{status}', date = '{today_str}' WHERE user = '{user}'")
     
     def get_status (self) -> str:
         """ Get current bot status

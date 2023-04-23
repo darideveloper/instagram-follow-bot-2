@@ -1,7 +1,7 @@
 *.csv
 __pycache__
 temp.*
-bot.db
+*.db
 cookies.json
 proxies.json
 config.json

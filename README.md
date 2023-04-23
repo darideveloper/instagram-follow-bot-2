@@ -72,18 +72,30 @@
 
 The project need target users (more details in the `settings` section). 
 
-The bot will:
-1. Get users from the followers, and last post comments and likes from the target users.
-2. Follow each user found.
-3. Like last 3 posts from each user found.
-4. If the bot already follow the user, it will unfollow all of them.
-5. Restart from step 1.
-
-More details in `roadmap` section.
-
 Note: the project don't need user login, but it need the user cookies. The cookies are saved in the `cookies.json` file. The bot will use the cookies to avoid the login in the page.
 More details in the `run` section.
 
+The bot have the following run options (inside the `runs` folder):
+
+### follow.py
+1. Get users from the followers, and last post comments and likes from the target users.
+2. Follow each user found.
+3. Like last 3 posts from each user found.
+
+### unfollow.py
+
+1. Get users already followed
+2. Unfollow each user
+  
+### autorun.py
+
+This script run the `follow.py` and `unfollow.py` scripts in a loop.
+
+1. Get users from the followers, and last post comments and likes from the target users.
+2. Follow each user found.
+3. Like last 3 posts from each user found.
+4. Get users already followed
+5. Unfollow each user
 
 # Built With
 
@@ -214,7 +226,9 @@ start cmd /k "python {project-folder-bot-1}\runs\autorun.py"
 - [X] Use proxies
 - [X] Never follow the same user twice
 - [X] Catch errors
-- [ ] Unfollow and follow process separately 
+- [x] Unfollow and follow process separately
+- [x] Block users who don't follow back
+- [x] Send direct messages to new followers
 
 See the [open issues](https://github.com/darideveloper/europeanstartups_scraper/issues) for a full list of proposed features (and known issues).
 

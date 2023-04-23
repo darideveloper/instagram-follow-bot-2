@@ -9,8 +9,8 @@ from database import DataBase
 db_path = os.path.join(PARENT_FODLER,  "bot.db")
 
 # Select all registers from bot table
-database = DataBase("bot")
-registers = database.run_sql ("select * from users")
+database = DataBase()
+registers = database.get_users ()
 if registers:
     for register in registers:
         print (register)

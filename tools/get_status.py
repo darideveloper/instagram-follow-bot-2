@@ -7,6 +7,6 @@ sys.path.append(PARENT_FODLER)
 from database import DataBase
 
 # Select all registers from bot table
-database = DataBase("bot")
-status = database.run_sql ("select value from settings where name = 'status' ")[0][0]
+database = DataBase()
+status = database.get_status ()
 print (status)

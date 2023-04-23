@@ -7,5 +7,6 @@ sys.path.append(PARENT_FODLER)
 from database import DataBase
 
 # Select all registers from bot table
-database = DataBase("bot")
-database.run_sql ("update settings set value = 'follow' where name = 'status'")
+STATUS = "unfollow"
+database = DataBase()
+database.set_status (STATUS)

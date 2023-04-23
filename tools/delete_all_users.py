@@ -7,5 +7,5 @@ sys.path.append(PARENT_FODLER)
 from database import DataBase
 
 # Delete all registers from bot table
-database = DataBase("bot")
-database.run_sql ("delete from users")
+database = DataBase()
+database.delete_users ()

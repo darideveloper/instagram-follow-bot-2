@@ -247,7 +247,8 @@ Table with all users date, to follow, blocked, etc.
 | ------ | ---- | ----------- |
 | user | char | instagram user profile link |
 | status | char | status of the user (to follow, followed, unfollowed, followed back, blocked) |
-| date | date | date of the last update |
+| date | char | date of the last update in iso format |
+| message | char | message sent to the user (default: '') |
 
 > settings
 

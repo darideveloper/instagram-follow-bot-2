@@ -11,7 +11,7 @@ from tools import date_iso
 db_path = os.path.join(PARENT_FODLER,  "bot.db")
 
 # --- UPDATE THIS VARIABLE TO CHANGE USER DATA ---
-PROFILE_LINK = "https://www.instagram.com/atelierimpresiones/" # Link to profile
+PROFILE_LINK = "https://www.instagram.com/darihdz1/" # Link to profile
 STATUS = "followed" # New status. values: to follow, followed, unfollowed, followed back, blocked
 DAYS_BACK = 3 # Last change date. 0 = today, 1 = yesterday, 2 = the day before yesterday, etc.
 

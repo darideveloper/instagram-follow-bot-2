@@ -109,7 +109,8 @@ class Bot (WebScraping):
             print (message)
     
     def __get_profiles__ (self, selector_link:str, selector_wrapper:str, load_more_selector:str, 
-                        scroll_by:int, max_users:int) -> list: 
+                        scroll_by:int, max_users:int, skip_followed:bool=True, skip_unfollowed:bool=True, 
+                        skip_blocked:bool=True, skip_followed_back:bool=True) -> list: 
         """ get links from scrollable element
 
         Args:
@@ -119,14 +120,30 @@ class Bot (WebScraping):
             scroll_by (int): number of pixels to scroll down
             max_users (int): max number of links to get
             
+            skip_followed (bool, optional): skip users already followed. Defaults to True.
+            skip_unfollowed (bool, optional): skip users already unfollowed. Defaults to True.
+            skip_blocked (bool, optional): skip users already blocked. Defaults to True.
+            skip_followed_back (bool, optional): skip users already followed back. Defaults to True.
+            
         Returns:
             list: list of links found
         """
                                 
         # Get users from database already followerd
-        users_followed = self.database.get_users (status="followed")
-        users_unfollowed = self.database.get_users (status="unfollowed")
-        skip_users_data = users_followed + users_unfollowed
+        users_followed = []
+        users_unfollowed = []
+        users_blocked = []
+        users_followed_back = []
+        if skip_followed:
+            users_followed = self.database.get_users (status="followed")
+        if skip_unfollowed:
+            users_unfollowed = self.database.get_users (status="unfollowed")
+        if skip_blocked:
+            users_blocked = self.database.get_users (status="blocked")
+        if skip_followed_back:
+            users_followed_back = self.database.get_users (status="followed back")
+            
+        skip_users_data = users_followed + users_unfollowed + users_blocked + users_followed_back
         if not skip_users_data:
             skip_users_data = []
         skip_users = list(map(lambda user: user[0], skip_users_data))
@@ -481,59 +498,64 @@ class Bot (WebScraping):
             self.selectors["users_followers_load_more"],
             scroll_by=2000,
             max_users=9999,
+            skip_followed=False
         )
         
         print (f"{len(followers)} followers found")
         
         # Get users already followed
-        uers_followed = self.database.get_users (status="followed")
-        print (f"Checking {len(uers_followed)} users already followed...")
+        users_followed = self.database.get_users (status="followed")
+        print (f"Checking {len(users_followed)} users already followed...")
         
         # Filter with followed date
         today = datetime.now()
         today = today.replace(hour=0, minute=0, second=0, microsecond=0)
         date_days_back = today - timedelta(days=self.days_block)
-        users_to_block = list(filter(lambda user:  date_iso.get_date_from_iso(user[2]) <= date_days_back, uers_followed))
+        users_followed_last_days = list(filter(lambda user:  date_iso.get_date_from_iso(user[2]) <= date_days_back, users_followed))
+        users_to_block = list(filter(lambda user: user[0] not in followers, users_followed_last_days))
         
-        # Get user names
+        # format users lists
         users_to_block = list(map(lambda user: user[0], users_to_block))
+        users_followed_last_days = list(map(lambda user: user[0], users_followed_last_days))
         
         if not users_to_block:
             print ("No users to block")
             return ""
         
-        if users_to_block:
-            # Block users who no returned the follow
-            print (f"{len(users_to_block)} users found to block")
-            print ("Blocking users...")
-            
-            for user in users_to_block:
-                self.__set_page_wait__ (user)
-                
-                # Check user status
-                unfollow_text = self.get_text (self.selectors["unfollow_btn"])
-                if unfollow_text.lower().strip() == "unblock":
-                    # Skip user
-                    print (f"\t{user} already blocked")
-                else:  
-                    # Block user
-                    self.click_js (self.selectors["more_actions_btn"])
-                    self.refresh_selenium ()
-                    
-                    self.click_js (self.selectors["block_btn"])
-                    self.refresh_selenium ()
-                    
-                    self.click_js (self.selectors["block_confirm_btn"])
-                    self.refresh_selenium ()
-                    
-                    # Update user status in database
-                    
-                    print (f"\t{user} blocked") 
-                    
-                self.database.update_user (user, "blocked")
+        # Block users who no returned the follow
+        print (f"{len(users_to_block)} users found to block")
+        print ("Blocking users...")
         
-        return None
+        for user in users_followed_last_days:
+            
+            # Update statud of the users who followed back
+            if user in followers:
+                self.database.update_user (user, "followed back")
+                continue
+                    
+            self.__set_page_wait__ (user)
+            
+            # Check user status
+            unfollow_text = self.get_text (self.selectors["unfollow_btn"])
+            if unfollow_text.lower().strip() == "unblock":
+                # Skip user
+                print (f"\t{user} already blocked")
+            else:  
+                # Block user
+                self.click_js (self.selectors["more_actions_btn"])
+                self.refresh_selenium ()
                 
+                self.click_js (self.selectors["block_btn"])
+                self.refresh_selenium ()
+                
+                self.click_js (self.selectors["block_confirm_btn"])
+                self.refresh_selenium ()
+                
+                # Update user status in database
+                print (f"\t{user} blocked") 
+                
+            self.database.update_user (user, "blocked")
+                        
     def auto_run (self):
         """ Run auto_follow and auto_unfollow functions in loop, using status from database
         """

@@ -32,12 +32,19 @@ class Bot (WebScraping):
         self.max_follow = int (os.getenv ("max_follow", 0))
         self.chrome_folder = os.getenv ("chrome_folder", "")
         self.days_block = int (os.getenv ("days_block", 0))
+        self.wait_message = int(os.getenv ("wait_message", 0)) * 60
+        
+        # time of the last message
+        self.last_message_time = time.time ()
         
         # History file
         self.history_file = os.path.join (os.path.dirname (__file__), "history.csv")
         
         # pages / urls
         self.url_instagram = "https://www.instagram.com/"
+        
+        # messages pàth
+        self.messages_path = os.path.join (self.project_folder, "messages.txt")
         
         # Css selectors
         self.selectors = {
@@ -69,6 +76,9 @@ class Bot (WebScraping):
             "block_btn": "._a9-v button:first-child",
             "block_confirm_btn": "._a9-v button:first-child",
             
+            'message_btn': '.x9f619 > [role="button"]',
+            "message_textarea": 'textarea',
+            "message_submit": '._ab5x .x1i10hfl[role="button"]',            
         }
     
         # Start chrome
@@ -80,6 +90,13 @@ class Bot (WebScraping):
         
         # Conneact with database and create tables
         self.database = DataBase()
+        
+        # read messages from txt
+        self.messages_options = []
+        with open (self.messages_path, "r") as file:
+            for line in file:
+                self.messages_options.append (line.strip())
+
     
     def __get_random_proxy__ (self) -> dict:
         """ Get random proxy from 'proxies.json' file
@@ -263,12 +280,12 @@ class Bot (WebScraping):
                     try:
                         self.click_js(self.selectors["like_btn"])
                     except:
-                        print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (like button not found))")
+                        print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skipped (like button not found))")
                     else:
                         self.__wait__ (f"\tpost {post_links.index(post_link) + 1} / {max_posts} liked")
                         
                 else:
-                    print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skiped (already liked)")
+                    print (f"\tpost {post_links.index(post_link) + 1} / {max_posts} skipped (already liked)")
                         
             # Update status of the user in database
             self.database.update_user (user, "followed")
@@ -363,6 +380,76 @@ class Bot (WebScraping):
     
         return profile_links
     
+    def __get_users_to_messages__ (self) -> list:
+        """ Get the list of the followed users who didn't received message yet
+        
+        Returns:
+            list: list of users to message
+        """
+                
+        # Get followed or followed back users
+        users_followed = self.database.get_users (status="followed")
+        users_followed_back = self.database.get_users (status="followed back")
+        users = users_followed + users_followed_back
+        
+        # Filters users who already received message
+        users_to_message = list(filter(lambda user: user[3] == "", users))
+        
+        return users_to_message
+    
+    def __send_message__ (self) -> bool:
+        """ Submit private random message to the next user
+
+        Returns:
+            bool: True if there are more users to message available
+        """
+        
+        users_to_message = self.__get_users_to_messages__ ()
+        
+        # Detect if there is users to message
+        if not users_to_message:
+            print ("No users to message")
+            return False
+        
+        # Get next user
+        user_to_message = users_to_message[0][0]
+        print (f"messaging user: {user_to_message}")
+        
+        # Go to profile
+        self.__set_page_wait__ (user_to_message)
+        
+        # Validate if there is a message button
+        message_btn_text = self.get_text (self.selectors["message_btn"])
+        if message_btn_text and message_btn_text.strip().lower() == "message":
+            self.click_js (self.selectors["message_btn"])
+            time.sleep (5)
+            self.refresh_selenium ()
+        else:
+            error = "message button not found"
+            print (f"\tskipped ({error})")
+            
+            # Save error in database
+            self.database.set_message (user_to_message, f"error: {error}")
+            
+            return True
+        
+        # Write random message 
+        random_message = random.choice (self.messages_options)
+        self.send_data (self.selectors["message_textarea"], random_message)
+        self.refresh_selenium ()
+        
+        # Submit message
+        self.click_js (self.selectors["message_submit"])
+        
+        # Save message in database
+        self.database.set_message (user_to_message, random_message)
+        
+        # Update last time message sent
+        self.last_message_time = time.time ()
+        
+        print (f"\tmessage sent: {random_message}")
+        return True
+        
     def follow (self):
         """ Follow users from list of target users
         """
@@ -556,6 +643,23 @@ class Bot (WebScraping):
                 
             self.database.update_user (user, "blocked")
     
+    def messages (self):
+        """ Submit messages to all followed or followed back users, in loop until all users are messaged
+        """
+        print ("\n-----------------------------")
+        print ("MESSAGING USERS:")
+        print ("-----------------------------")
+        
+        # Loop for submit messages in loop
+        while True:
+            self.__send_message__ ()
+            more_users = self.__get_users_to_messages__ ()
+            if more_users:
+                print ("waiting for next message...")
+                time.sleep (self.wait_message)
+            else:
+                break
+    
     def auto_run (self):
         """ Run auto_follow and auto_unfollow functions in loop, using status from database
         """
@@ -572,4 +676,16 @@ class Bot (WebScraping):
             elif status == "block":
                 self.block ()
                 self.database.set_status ("follow")       
+                
+            # Submit private message to the next user
+            next_message_time = self.last_message_time + self.wait_message
+            now = time.time ()
+            if now > next_message_time:
+                
+                print ("\n-----------------------------")
+                print ("MESSAGING NEXT USER:")
+                print ("-----------------------------")
+                
+                self.__send_message__ ()
+                self.last_message_time = now
     

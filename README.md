@@ -86,16 +86,25 @@ The bot have the following run options (inside the `runs` folder):
 
 1. Get users already followed
 2. Unfollow each user
-  
+
+### block.py
+
+1. Get the current followers of the bot
+2. Get users already followed specific days ago (you can setup it in the `.env` file. More details in the `settings` section)
+3. Filter users followed who don't follow back the bot
+4. Block each user who don't follow back the bot
+
 ### autorun.py
 
-This script run the `follow.py` and `unfollow.py` scripts in a loop.
+This script run the `follow.py` and `block.py` scripts in a loop.
 
 1. Get users from the followers, and last post comments and likes from the target users.
 2. Follow each user found.
 3. Like last 3 posts from each user found.
-4. Get users already followed
-5. Unfollow each user
+4. Get the current followers of the bot
+5. Get users already followed specific days ago (you can setup it in the `.env` file. More details in the `settings` section)
+6. Filter users followed who don't follow back the bot
+7. Block each user who don't follow back the bot
 
 # Built With
 
@@ -240,7 +249,7 @@ You can change it manually in the database or with the `scripts/update_status.py
 
 # Run
 
-For run the bot you can use the files `runs/autorun.py` or `runs/autorun.ipynb`
+For run the bot you can use the run files in the `runs` folder. More details in the `workflow` section.
 
 ## Multiple bots
 

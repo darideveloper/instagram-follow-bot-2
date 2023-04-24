@@ -555,7 +555,7 @@ class Bot (WebScraping):
                 print (f"\t{user} blocked") 
                 
             self.database.update_user (user, "blocked")
-                        
+    
     def auto_run (self):
         """ Run auto_follow and auto_unfollow functions in loop, using status from database
         """

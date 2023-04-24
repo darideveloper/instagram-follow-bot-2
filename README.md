@@ -203,6 +203,41 @@ Total number of max number of users to follow from ALL target
 The max number of days that the bot will wait for users to follow back before block them.
 if the user don't follow back in the specified days, the bot will block the user, when you run the `runs/block.py` script or the `runs/autorun.py` script.
 
+## Database
+
+All data its saved in the database `bot.db`. The database its automatically created when the bot is run for the first time.
+
+### Delete database
+
+For delete the database, just delete the file `bot.db` in the project folder.
+
+### Tables
+
+> users
+
+Table with all users date, to follow, blocked, etc.
+
+| Column | Type | Description |
+| ------ | ---- | ----------- |
+| user | char | instagram user name |
+| status | char | status of the user (to_follow, followed, unfollowed, folloed back, blocked) |
+| date | date | date of the last update |
+
+> settings
+
+Table with the settings of the bot
+
+| Column | Type | Description |
+| ------ | ---- | ----------- |
+| name | char | name of the setting |
+| value | char | value of the setting |
+
+> status
+
+The status of the bot for the `runs/autorun.py` script, its in the settings table with the name `status`.
+The possible values are: follow, unfollow, block
+You can change it manually in the database or with the `scripts/update_status.py` script.
+
 # Run
 
 For run the bot you can use the files `runs/autorun.py` or `runs/autorun.ipynb`

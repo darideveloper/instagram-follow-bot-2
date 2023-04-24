@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from database import DataBase
 from selenium.webdriver.common.by import By
 from scraping_manager.automate import WebScraping
+from datetime import datetime, timedelta
 from tools import date_iso
 
 class Bot (WebScraping):
@@ -30,33 +31,49 @@ class Bot (WebScraping):
         self.target_users = os.getenv ("target_users").split(",")
         self.max_follow = int (os.getenv ("max_follow", 0))
         self.chrome_folder = os.getenv ("chrome_folder", "")
+        self.days_block = int (os.getenv ("days_block", 0))
         
         # History file
         self.history_file = os.path.join (os.path.dirname (__file__), "history.csv")
+        
+        # pages / urls
+        self.url_instagram = "https://www.instagram.com/"
         
         # Css selectors
         self.selectors = {
             "post": "._ac7v._al3n ._aabd._aa8k._al3l a",
             "show_post_likes": "span.x1lliihq > a",
+            
             "users_posts_likes": "span.x1lliihq.x193iq5w.x6ikm8r a",
             "users_posts_likes_wrapper": '[role="dialog"] [style^="height: 356px;"]',
             "users_posts_likes_load_more": "",
+            
             "users_posts_comments": "._ae2s._ae3v._ae3w .xt0psk2 > a",
             "users_posts_comments_wrapper": "._ae2s._ae3v._ae3w .x78zum5.xdt5ytf.x1iyjqo2.x9ek82g",
             "users_posts_comments_load_more": "",
-            "users_followers": ".x7r02ix.xf1ldfh.x131esax .xt0psk2 > .xt0psk2 > a",
+            
+            "users_followers": '.x7r02ix.xf1ldfh.x131esax ._aano > div:first-child .xt0psk2 > .xt0psk2 > a',
             "users_followers_wrapper": '[role="dialog"] ._aano',
             "users_followers_load_more": "",
+            
             "follow_btn": "header button._acan._acap._acas._aj1-",
             "like_btn": "span:first-child button._abl-",
+            
             "unfollow_btn": "header button._acan._acap._aj1-", 
             "unfollow_confirm_btn": '.x1cy8zhl .x9f619 > div[role="button"]:last-child',
             "unfollow_confirm_btn_b": '.x1n2onr6.xzkaem6 .x78zum5.xdt5ytf > button',
+            
+            "bot_profile": '.xh8yej3.x1iyjqo2 > div:last-child [role="link"]',
+            
+            "more_actions_btn": "button._abl-",
+            "block_btn": "._a9-v button:first-child",
+            "block_confirm_btn": "._a9-v button:first-child",
+            
         }
     
         # Start chrome
         super ().__init__ (headless=self.headless, chrome_folder=self.chrome_folder, 
-                           start_killing=True, web_page="https://www.instagram.com/",
+                           start_killing=True, web_page=self.url_instagram,
                            proxy_server=self.proxy["host"], proxy_port=self.proxy["port"], 
                            proxy_user=self.proxy["user"], proxy_pass=self.proxy["password"],
                            cookies_path=self.cookies_path)
@@ -419,9 +436,7 @@ class Bot (WebScraping):
             
             # Unfollow user
             unfollow_text = self.get_text (self.selectors["unfollow_btn"])
-            if unfollow_text.lower().strip() not in ["following", "requested"]:    
-                self.__wait__ (f"\t{user} already unfollowed")
-            else:
+            if unfollow_text.lower().strip() in ["following", "requested"]:    
                 self.click_js (self.selectors["unfollow_btn"])
                 self.refresh_selenium ()
                 
@@ -436,15 +451,88 @@ class Bot (WebScraping):
                 self.database.update_user (user, "unfollowed")
                 
                 self.__wait__ (f"\t{user} unfollowed")
+            else:
+                self.__wait__ (f"\t{user} already unfollowed (or blocked)")
                 
-    # def auto_block (self):
-    #     """ Block users already followed who didn't follow back in three days
-    #     """
+    def block (self):
+        """ Block users already followed who didn't follow back in three days
+        """
         
-    #     return None
-    #     self.__get_followers__ ()
+        print ("\n-----------------------------")
+        print ("BLOCKING USERS:")
+        print ("-----------------------------")
         
+        # Get follors of the bot
+        self.set_page (self.url_instagram)
         
+        # Open bot profile page
+        bot_profile = self.get_attrib (self.selectors["bot_profile"], "href")
+        if not bot_profile:
+            raise Exception ("bot profile not found")
+        
+        # Open followers page
+        followes_page = bot_profile + "followers"
+        self.set_page (followes_page)
+        
+        # Go down and get profiles links
+        followers = self.__get_profiles__ (
+            self.selectors["users_followers"], 
+            self.selectors["users_followers_wrapper"], 
+            self.selectors["users_followers_load_more"],
+            scroll_by=2000,
+            max_users=9999,
+        )
+        
+        print (f"\t{len(followers)} followers found")
+        
+        # Get users already followed
+        uers_followed = self.database.get_users (status="followed")
+        print (f"\tChecking {len(uers_followed)} users already followed...")
+        
+        # Filter with followed date
+        today = datetime.now()
+        today = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        date_days_back = today - timedelta(days=self.days_block)
+        users_to_block = list(filter(lambda user:  date_iso.get_date_from_iso(user[2]) <= date_days_back, uers_followed))
+        
+        # Get user names
+        users_to_block = list(map(lambda user: user[0], users_to_block))
+        
+        if not users_to_block:
+            print ("\tNo users to block")
+            return ""
+        
+        if users_to_block:
+            # Block users who no returned the follow
+            print (f"\t{len(users_to_block)} users found to block")
+            print ("\tBlocking users...")
+            
+            for user in users_to_block:
+                self.__set_page_wait__ (user)
+                
+                # Check user status
+                unfollow_text = self.get_text (self.selectors["unfollow_btn"])
+                if unfollow_text.lower().strip() == "unblock":
+                    # Skip user
+                    print (f"\t{user} already blocked")
+                else:  
+                    # Block user
+                    self.click_js (self.selectors["more_actions_btn"])
+                    self.refresh_selenium ()
+                    
+                    self.click_js (self.selectors["block_btn"])
+                    self.refresh_selenium ()
+                    
+                    self.click_js (self.selectors["block_confirm_btn"])
+                    self.refresh_selenium ()
+                    
+                    # Update user status in database
+                    
+                    print (f"\t{user} blocked") 
+                    
+                self.database.update_user (user, "blocked")
+        
+        return None
                 
     def auto_run (self):
         """ Run auto_follow and auto_unfollow functions in loop, using status from database

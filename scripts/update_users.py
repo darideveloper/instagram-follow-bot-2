@@ -10,10 +10,11 @@ from tools import date_iso
 
 db_path = os.path.join(PARENT_FODLER,  "bot.db")
 
-STATUS = "follow"
+STATUS = "followed"
 DAYS_BACK = 3
 
 today = datetime.now()
+today = today.replace(hour=0, minute=0, second=0, microsecond=0)
 to_date = today - timedelta(days=DAYS_BACK)
 to_date_iso = date_iso.get_date_iso (to_date)
 

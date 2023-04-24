@@ -6,7 +6,9 @@ sys.path.append(PARENT_FODLER)
 
 from database import DataBase
 
+# --- UPDATE THIS VARIABLE TO CHANGE THE STATUS ---
+STATUS = "follow" # values: follow, unfollow, block
+
 # Select all registers from bot table
-STATUS = "unfollow"
 database = DataBase()
 database.set_status (STATUS)

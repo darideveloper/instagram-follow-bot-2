@@ -10,8 +10,9 @@ from tools import date_iso
 
 db_path = os.path.join(PARENT_FODLER,  "bot.db")
 
-STATUS = "followed"
-DAYS_BACK = 3
+# --- UPDATE THIS VARIABLE TO CHANGE USER STATUS AND DATE ---
+STATUS = "followed" # values: to follow, followed, unfollowed, followed back, blocked
+DAYS_BACK = 3 # 0 = today, 1 = yesterday, 2 = the day before yesterday, etc.
 
 today = datetime.now()
 today = today.replace(hour=0, minute=0, second=0, microsecond=0)

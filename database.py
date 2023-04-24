@@ -20,7 +20,7 @@ class DataBase ():
         """ Create tables 'users' and 'settings' in database, with default values
         """
         
-        self.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char, message: char DEFAULT '')")
+        self.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char, message char DEFAULT '')")
         self.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
         
         # Create default status to "follow"
@@ -105,7 +105,7 @@ class DataBase ():
         """
         
         today_str = date_iso.get_today_iso ()
-        self.run_sql (f"INSERT INTO users VALUES ('{user}', '{status}', '{date}')")
+        self.run_sql (f"INSERT INTO users VALUES ('{user}', '{status}', '{date}', '')")
         
     def update_user (self, user:str, status:str, date:str=date_iso.get_today_iso ()):
         """ Update user status
@@ -139,3 +139,13 @@ class DataBase ():
         
         # Set bot status
         self.run_sql (f"update settings set value = '{status}' where name = 'status'")
+        
+    def set_message (self, useer:str, message:str):
+        """ Save message sent to users
+
+        Args:
+            user (str): user name
+            message (str): message body
+        """
+        
+        self.run_sql (f"update user set message = '{message}' where user = '{user}'")

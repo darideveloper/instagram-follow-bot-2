@@ -93,7 +93,7 @@ The bot have the following run options (inside the `runs` folder):
 3. Filter users followed who don't follow back the bot
 4. Block each user who don't follow back the bot
 
-### message.py
+### messages.py
 
 1. Get users followed or followed back
 2. Submit a message to the next user
@@ -102,7 +102,7 @@ The bot have the following run options (inside the `runs` folder):
 
 ### autorun.py
 
-This script run the `follow.py`, `block.py` and `message.py` scripts in a loop.
+This script run the `follow.py`, `block.py` and `messages.py` scripts in a loop.
 
 When the `follow` or `block` process ends, the script run the `messages` script if the wait beeteen messages is over (else, it will continue with the next `follow` or `block` process).
 

@@ -36,8 +36,6 @@
   </p>
 </div>
 
-
-
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
@@ -78,6 +76,7 @@ More details in the `run` section.
 The bot have the following run options (inside the `runs` folder):
 
 ### follow.py
+
 1. Get users from the followers, and last post comments and likes from the target users.
 2. Follow each user found.
 3. Like last 3 posts from each user found.
@@ -94,17 +93,18 @@ The bot have the following run options (inside the `runs` folder):
 3. Filter users followed who don't follow back the bot
 4. Block each user who don't follow back the bot
 
+### message.py
+
+1. Get users followed or followed back
+2. Submit a message to the next user
+3. Wait sepecif time (you can setup it in the `.env` file. More details in the `settings` section)
+4. Continue from step 2 in loop
+
 ### autorun.py
 
-This script run the `follow.py` and `block.py` scripts in a loop.
+This script run the `follow.py`, `block.py` and `message.py` scripts in a loop.
 
-1. Get users from the followers, and last post comments and likes from the target users.
-2. Follow each user found.
-3. Like last 3 posts from each user found.
-4. Get the current followers of the bot
-5. Get users already followed specific days ago (you can setup it in the `.env` file. More details in the `settings` section)
-6. Filter users followed who don't follow back the bot
-7. Block each user who don't follow back the bot
+When the `follow` or `block` process ends, the script run the `messages` script if the wait beeteen messages is over (else, it will continue with the next `follow` or `block` process).
 
 # Built With
 
@@ -188,6 +188,18 @@ Proxies format:
 ]
 ```
 
+## Messages file
+
+The bot will use the messages in the `messages.txt` (create file if not exist) file to send messages to the users already followed. The bot will use a random message for each user.
+Write each message in a new line.
+
+Sample file:
+```txt
+hello, whats up?
+Hi, I am boring, what are you doing?
+hello, what are you from?
+```
+
 ## Env file
 
 The `.env` (create file if not exist) file is used to save the settings of the bot. The file must be created in the project folder.
@@ -197,6 +209,7 @@ Sample file:
 target_users = elonmusk,freddiervega
 max_follow = 20
 days_block = 3
+wait_message = 60
 ```
 
 ### target_users
@@ -211,6 +224,10 @@ Total number of max number of users to follow from ALL target
 
 The max number of days that the bot will wait for users to follow back before block them.
 if the user don't follow back in the specified days, the bot will block the user, when you run the `runs/block.py` script or the `runs/autorun.py` script.
+
+### wait_message
+ 
+Wait time (in minutes) between each message sent to the users already followed or followed back.
 
 ## Database
 
@@ -307,6 +324,8 @@ Insert a user in the database (with profile link, status and date)
 - [x] Unfollow and follow process separately
 - [x] Block users who don't follow back
 - [x] Send direct messages to new followers
+- [X] Block users
+- [X] Submit private messages
 
 See the [open issues](https://github.com/darideveloper/europeanstartups_scraper/issues) for a full list of proposed features (and known issues).
 

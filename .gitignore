@@ -8,3 +8,4 @@ config.json
 .env
 proxy_auth_plugin.zip
 *.zip
+messages.txt

@@ -95,27 +95,28 @@ class DataBase ():
         else:
             return self.run_sql (f"SELECT COUNT(user) FROM users")[0][0]
     
-    def insert_user (self, user:str, status:str="to follow"):
+    def insert_user (self, user:str, status:str="to follow", date:str=date_iso.get_today_iso ()):
         """ Insert new user in users table
 
         Args:
             user (str): user name
             status (str, optional): current status. Defaults to "to follow".
+            date (str, optional): new date. Defaults to date_iso.get_today_iso ().
         """
         
         today_str = date_iso.get_today_iso ()
-        self.run_sql (f"INSERT INTO users VALUES ('{user}', '{status}', '{today_str}')")
+        self.run_sql (f"INSERT INTO users VALUES ('{user}', '{status}', '{date}')")
         
-    def update_user (self, user:str, status:str):
+    def update_user (self, user:str, status:str, date:str=date_iso.get_today_iso ()):
         """ Update user status
 
         Args:
             user (str): user name
             status (str): new status
+            date (str, optional): new date. Defaults to date_iso.get_today_iso ().
         """
         
-        today_str = date_iso.get_today_iso ()
-        self.run_sql (f"UPDATE users SET status = '{status}', date = '{today_str}' WHERE user = '{user}'")
+        self.run_sql (f"UPDATE users SET status = '{status}', date = '{date}' WHERE user = '{user}'")
     
     def get_status (self) -> str:
         """ Get current bot status

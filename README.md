@@ -187,6 +187,7 @@ Sample file:
 ```bash
 target_users = elonmusk,freddiervega
 max_follow = 20
+days_block = 3
 ```
 
 ### target_users
@@ -196,6 +197,11 @@ List of users (separated by comma) that the bot will use to get the followers an
 ### max_follow
 
 Total number of max number of users to follow from ALL target
+
+### days_block
+
+The max number of days that the bot will wait for users to follow back before block them.
+if the user don't follow back in the specified days, the bot will block the user, when you run the `runs/block.py` script or the `runs/autorun.py` script.
 
 # Run
 

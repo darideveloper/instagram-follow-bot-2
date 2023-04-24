@@ -140,7 +140,7 @@ class DataBase ():
         # Set bot status
         self.run_sql (f"update settings set value = '{status}' where name = 'status'")
         
-    def set_message (self, useer:str, message:str):
+    def set_message (self, user:str, message:str):
         """ Save message sent to users
 
         Args:
@@ -148,4 +148,4 @@ class DataBase ():
             message (str): message body
         """
         
-        self.run_sql (f"update user set message = '{message}' where user = '{user}'")
+        self.run_sql (f"update users set message = '{message}' where user = '{user}'")

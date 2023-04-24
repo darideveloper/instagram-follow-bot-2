@@ -258,9 +258,9 @@ start cmd /k "python {project-folder-bot-1}\runs\autorun.py"
 
 All script for manage the database are in the `scripts` folder.
 
-### select_users.py
+### get_users.py
 
-This script show all users in database. More details in database section
+This script show all users in database.
 
 ### delete_users.py
 
@@ -268,15 +268,19 @@ This script delete all users in database
 
 ### update_users.py
 
-This script update the users in database (change the statud and date)
+This script update the users in database (change the status and date)
 
 ### get_status.py
 
-Show the current status of the bot. More details in database section
+Show the current status of the bot. 
 
 ### set_status.py
 
-Set the status of the bot. More details in database section
+Set the status of the bot.
+
+### insert_user.py
+
+Insert a user in the database (with profile link, status and date)
 
 <!-- ROADMAP -->
 ## Roadmap

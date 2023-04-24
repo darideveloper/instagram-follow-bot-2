@@ -20,7 +20,7 @@ class DataBase ():
         """ Create tables 'users' and 'settings' in database, with default values
         """
         
-        self.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char)")
+        self.run_sql ("CREATE TABLE IF NOT EXISTS users (user char, status char, date char, message: char DEFAULT '')")
         self.run_sql ("CREATE TABLE IF NOT EXISTS settings (name char, value char)")
         
         # Create default status to "follow"

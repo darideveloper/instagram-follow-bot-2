@@ -7,4 +7,4 @@ sys.path.append(parent_folder)
 from bot import Bot
 
 bot_instance = Bot()
-bot_instance.auto_follow ()
+bot_instance.unfollow ()

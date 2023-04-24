@@ -329,7 +329,7 @@ class Bot (WebScraping):
     
         return profile_links
     
-    def auto_follow (self):
+    def follow (self):
         """ Follow users from list of target users
         """
         
@@ -388,7 +388,7 @@ class Bot (WebScraping):
         
         print ("Done.")
      
-    def auto_unfollow (self):
+    def unfollow (self):
         """ Unfollow users already followed
         """
         
@@ -437,6 +437,15 @@ class Bot (WebScraping):
                 
                 self.__wait__ (f"\t{user} unfollowed")
                 
+    # def auto_block (self):
+    #     """ Block users already followed who didn't follow back in three days
+    #     """
+        
+    #     return None
+    #     self.__get_followers__ ()
+        
+        
+                
     def auto_run (self):
         """ Run auto_follow and auto_unfollow functions in loop, using status from database
         """
@@ -448,9 +457,9 @@ class Bot (WebScraping):
             
             # Run follow or unfollow based in status from database
             if status == "follow":
-                self.auto_follow ()
+                self.follow ()
                 self.database.set_status ("unfollow")
             elif status == "unfollow":
-                self.auto_unfollow ()
+                self.unfollow ()
                 self.database.set_status ("follow")       
     

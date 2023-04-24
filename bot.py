@@ -546,8 +546,8 @@ class Bot (WebScraping):
             # Run follow or unfollow based in status from database
             if status == "follow":
                 self.follow ()
-                self.database.set_status ("unfollow")
-            elif status == "unfollow":
-                self.unfollow ()
+                self.database.set_status ("block")
+            elif status == "block":
+                self.block ()
                 self.database.set_status ("follow")       
     

@@ -220,7 +220,7 @@ Table with all users date, to follow, blocked, etc.
 | Column | Type | Description |
 | ------ | ---- | ----------- |
 | user | char | instagram user profile link |
-| status | char | status of the user (to_follow, followed, unfollowed, folloed back, blocked) |
+| status | char | status of the user (to follow, followed, unfollowed, followed back, blocked) |
 | date | date | date of the last update |
 
 > settings

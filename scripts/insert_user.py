@@ -10,7 +10,8 @@ from tools import date_iso
 
 db_path = os.path.join(PARENT_FODLER,  "bot.db")
 
-# --- UPDATE THIS VARIABLE TO CHANGE USER STATUS AND DATE ---
+# --- UPDATE THIS VARIABLE TO CHANGE USER DATA ---
+PROFILE_LINK = "https://www.instagram.com/atelierimpresiones/" # Link to profile
 STATUS = "followed" # New status. values: to follow, followed, unfollowed, followed back, blocked
 DAYS_BACK = 3 # Last change date. 0 = today, 1 = yesterday, 2 = the day before yesterday, etc.
 
@@ -21,8 +22,4 @@ to_date_iso = date_iso.get_date_iso (to_date)
 
 # Select all registers from bot table
 database = DataBase()
-users = database.get_users ()
-
-for user in users:
-    user_name = user[0]
-    database.update_user (user_name, STATUS, to_date_iso)
+database.insert_user (PROFILE_LINK, STATUS, to_date_iso)

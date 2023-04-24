@@ -356,13 +356,13 @@ class Bot (WebScraping):
         
         # Count user to follow or followed already in database
         users_to_follow_num = self.database.count_users ("to follow")
-        users_followd_num = self.database.count_users ("followed")
+        users_followed_num = self.database.count_users ("followed")
         
-        if users_followd_num > 0:
-            print (f"Users already followed: {users_followd_num}")
+        if users_followed_num > 0:
+            print (f"Users already followed: {users_followed_num}")
         
         # Calculate users to follow from each target user
-        remaining_users = self.max_follow - users_to_follow_num - users_followd_num
+        remaining_users = self.max_follow - users_to_follow_num
         max_follow_target = int(remaining_users / len(self.target_users))
         
         if remaining_users > 0:
@@ -483,11 +483,11 @@ class Bot (WebScraping):
             max_users=9999,
         )
         
-        print (f"\t{len(followers)} followers found")
+        print (f"{len(followers)} followers found")
         
         # Get users already followed
         uers_followed = self.database.get_users (status="followed")
-        print (f"\tChecking {len(uers_followed)} users already followed...")
+        print (f"Checking {len(uers_followed)} users already followed...")
         
         # Filter with followed date
         today = datetime.now()
@@ -499,13 +499,13 @@ class Bot (WebScraping):
         users_to_block = list(map(lambda user: user[0], users_to_block))
         
         if not users_to_block:
-            print ("\tNo users to block")
+            print ("No users to block")
             return ""
         
         if users_to_block:
             # Block users who no returned the follow
-            print (f"\t{len(users_to_block)} users found to block")
-            print ("\tBlocking users...")
+            print (f"{len(users_to_block)} users found to block")
+            print ("Blocking users...")
             
             for user in users_to_block:
                 self.__set_page_wait__ (user)

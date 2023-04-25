@@ -388,9 +388,7 @@ class Bot (WebScraping):
         """
                 
         # Get followed or followed back users
-        users_followed = self.database.get_users (status="followed")
-        users_followed_back = self.database.get_users (status="followed back")
-        users = users_followed + users_followed_back
+        users = self.database.get_users (status="followed back")
         
         # Filters users who already received message
         users_to_message = list(filter(lambda user: user[3] == "", users))

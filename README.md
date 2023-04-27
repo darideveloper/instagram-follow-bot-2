@@ -100,11 +100,16 @@ The bot have the following run options (inside the `runs` folder):
 3. Wait sepecif time (you can setup it in the `.env` file. More details in the `settings` section)
 4. Continue from step 2 in loop
 
-### autorun.py
+### autorun_loop.py
 
 This script run the `follow.py`, `block.py` and `messages.py` scripts in a loop.
 
 When the `follow` or `block` process ends, the script run the `messages` script if the wait beeteen messages is over (else, it will continue with the next `follow` or `block` process).
+
+### autorun_times.py
+
+When you run this script, it will request you two values: "Running time" and "Sleep time".
+The script will run the `follow` process in loop, until the "Running time" is over. Then, the script will run the `block` and `messages` process. Finally, sleep the "Sleep time" and repeat the process.
 
 # Built With
 

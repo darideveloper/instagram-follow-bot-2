@@ -258,7 +258,7 @@ class Bot (WebScraping):
             follow_text = self.get_text (self.selectors["follow_btn"])
             if follow_text and follow_text.lower().strip() == "follow":
                 self.click_js (self.selectors["follow_btn"])
-                self.__wait__ (f"\tuser followed: {user}")
+                self.__wait__ (f"\tuser followed")
             else:
                 self.__wait__ (f"\tuser already followed")
             

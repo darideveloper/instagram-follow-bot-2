@@ -104,12 +104,14 @@ The bot have the following run options (inside the `runs` folder):
 
 This script run the `follow.py`, `block.py` and `messages.py` scripts in a loop.
 
-When the `follow` or `block` process ends, the script run the `messages` script if the wait beeteen messages is over (else, it will continue with the next `follow` or `block` process).
+When the `follow` or `block` process ends, the script run the `messages` script if the wait between messages is over (else, it will continue with the next `follow` or `block` process).
 
 ### autorun_times.py
 
 When you run this script, it will request you two values: "Running time" and "Sleep time".
-The script will run the `follow` process in loop, until the "Running time" is over. Then, the script will run the `block` and `messages` process. Finally, sleep the "Sleep time" and repeat the process.
+The script will run the `follow` process in loop, until the "Running time" is over. Then, the script will run the `block` and `messages` process. Finally, wait the "Sleep time" and repeat the process.
+
+Note: the follow process will not be interrupted, that means, if the "Running time" is over, the script will wait until the follow process ends (for example, if you setup in the .env file, 100 users to follow, the script will wait to end the following process to the users users), and then, run the `block` and `messages` process.
 
 # Built With
 

@@ -658,12 +658,11 @@ class Bot (WebScraping):
             else:
                 break
     
-    def auto_run (self):
-        """ Run auto_follow and auto_unfollow functions in loop, using status from database
+    def auto_run_loop (self):
+        """ Run follow and auto_unfollow functions in loop, using status from database
         """
         
         while True:
-        
             # get status from database
             status = self.database.get_status ()
             
@@ -686,4 +685,37 @@ class Bot (WebScraping):
                 
                 self.__send_message__ ()
                 self.last_message_time = now
+            
     
+    def auto_run_times (self):
+        """ Run follow in loop specific time, and when follow ends, the block and the send messages 
+        process start
+        """
+        
+        # Request times and convert to int
+        running_time = input ("Running time (minutes): ")
+        sleep_time = input ("Sleep time (minutes): ")
+        if not running_time.isdigit () or not sleep_time.isdigit (): 
+            print ("Invalid times. Try again.")
+            return ""
+        running_time = int (running_time) * 60
+        sleep_time = int (sleep_time) * 60
+        
+        # Calculate times
+        start_time = time.time ()
+        end_time = start_time + running_time    
+        
+        while True:
+            now = time.time ()
+            if now > end_time:
+                print ("\nTime limit reached. Starting block and message process: \n")
+                
+                self.block ()
+                self.messages ()
+                
+                print (f"\nSleeping for {sleep_time / 60} minutes...")
+                time.sleep (sleep_time)
+                start_time = time.time ()
+                end_time = start_time + running_time            
+            
+            self.follow ()

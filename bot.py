@@ -146,7 +146,7 @@ class Bot (WebScraping):
             list: list of links found
         """
                                 
-        # Get users from database already followerd
+        # Get users from database to skip
         users_followed = []
         users_unfollowed = []
         users_blocked = []
@@ -160,7 +160,10 @@ class Bot (WebScraping):
         if skip_followed_back:
             users_followed_back = self.database.get_users (status="followed back")
             
-        skip_users_data = users_followed + users_unfollowed + users_blocked + users_followed_back
+        # Format target users
+        target_users = list(map(lambda user: f"https://www.instagram.com/{user}/", self.target_users))
+            
+        skip_users_data = users_followed + users_unfollowed + users_blocked + users_followed_back + target_users
         if not skip_users_data:
             skip_users_data = []
         skip_users = list(map(lambda user: user[0], skip_users_data))
@@ -713,9 +716,12 @@ class Bot (WebScraping):
                 self.block ()
                 self.messages ()
                 
-                print (f"\nSleeping for {sleep_time / 60} minutes...")
+                print (f"\nSleeping for {int(sleep_time / 60)} minutes...")
                 time.sleep (sleep_time)
                 start_time = time.time ()
-                end_time = start_time + running_time            
+                end_time = start_time + running_time
+                
+            remaing_time = end_time - now
+            print (f"\nRemaining time {int(remaing_time / 60)} minutes...")                
             
             self.follow ()

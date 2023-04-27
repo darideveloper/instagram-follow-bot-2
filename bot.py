@@ -49,14 +49,14 @@ class Bot (WebScraping):
         # Css selectors
         self.selectors = {
             "post": "._ac7v._al3n ._aabd._aa8k._al3l a",
-            "show_post_likes": "span.x1lliihq > a",
+            "show_post_likes": 'span > a[href$="liked_by/"]',
             
             "users_posts_likes": "span.x1lliihq.x193iq5w.x6ikm8r a",
             "users_posts_likes_wrapper": '[role="dialog"] [style^="height: 356px;"]',
             "users_posts_likes_load_more": "",
             
-            "users_posts_comments": "._ae2s._ae3v._ae3w .xt0psk2 > a",
-            "users_posts_comments_wrapper": "._ae2s._ae3v._ae3w .x78zum5.xdt5ytf.x1iyjqo2.x9ek82g",
+            "users_posts_comments": "ul._a9ym .xt0psk2 > a",
+            "users_posts_comments_wrapper": 'div.x5yr21d > ul._a9z6._a9za',
             "users_posts_comments_load_more": "",
             
             "users_followers": '.x7r02ix.xf1ldfh.x131esax ._aano > div:first-child .xt0psk2 > .xt0psk2 > a',
@@ -195,9 +195,9 @@ class Bot (WebScraping):
                     break
             
             # Go down
-            elems = self.get_elems (selector_wrapper)
-            if elems:
-                self.driver.execute_script(f"arguments[0].scrollBy (0, {scroll_by});", elems[0])
+            scroll_elem = self.get_elems (selector_wrapper)
+            if scroll_elem:
+                self.driver.execute_script(f"arguments[0].scrollBy (0, {scroll_by});", scroll_elem[0])
             
             # Click button for load more results
             if load_more_selector:
